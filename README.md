@@ -1,4 +1,4 @@
-wheelhouse-updloader
+wheelhouse-uploader
 ===================
 
 Script to help maintain a wheelhouse folder on a cloud storage such as
