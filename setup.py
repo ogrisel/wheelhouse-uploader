@@ -11,7 +11,7 @@ except ImportError:
 
 setup(
     name="wheelhouse-uploader",
-    version="0.1.0",
+    version="0.2.0",
     description="Upload wheels to any cloud storage supported by Libcloud",
     maintainer="Olivier Grisel",
     maintainer_email="olivier.grisel@ensta.org",

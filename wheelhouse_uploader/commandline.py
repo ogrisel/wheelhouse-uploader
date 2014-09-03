@@ -2,6 +2,7 @@ import argparse
 import sys
 import os
 from libcloud.common.types import InvalidCredsError
+import libcloud.security
 from wheelhouse_uploader.upload import Uploader
 
 def parse_args():
@@ -18,6 +19,8 @@ def parse_args():
                         help='Apache Libcloud cloud storage provider')
     parser.add_argument('--max-workers', type=int, default=4,
                         help='maximum number of concurrent uploads')
+    parser.add_argument('--no-ssl-check', default=False, action="store_true",
+                        help='Disable SSL certificate validation')
     options = parser.parse_args()
     if not options.username:
         options.username = os.environ.get('WHEELHOUSE_UPLOADER_USERNAME')
@@ -34,6 +37,11 @@ def main():
     if not options.secret:
         print("secret API key required")
         sys.exit(1)
+
+    if options.no_ssl_check:
+        # This is needed when the host OS such as Windows does not make
+        # make available a CA cert bundle in a standard location.
+        libcloud.security.VERIFY_SSL_CERT = False
 
     try:
         uploader = Uploader(options)
