@@ -11,12 +11,12 @@ except ImportError:
 
 setup(
     name="wheelhouse-uploader",
-    version="0.1-dev",
+    version="0.1.0",
     description="Upload wheels to any cloud storage supported by Libcloud",
     maintainer="Olivier Grisel",
     maintainer_email="olivier.grisel@ensta.org",
     license="MIT",
-    url='http://github.com/ogrisel/wheelhouse-updater',
+    url='http://github.com/ogrisel/wheelhouse-uploader',
     packages=[
         'wheelhouse_uploader',
     ],
@@ -32,6 +32,11 @@ setup(
         'Operating System :: POSIX',
         'Operating System :: Unix',
         'Operating System :: MacOS',
-        'Development Status :: 3 - Alpha',
-    ],
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+     ],
 )

@@ -1,7 +1,8 @@
 wheelhouse-updloader
 ===================
 
-Script to help maintain a wheelhouse folder on a cloud storage.
+Script to help maintain a wheelhouse folder on a cloud storage such as
+Amazon S3, Rackspace Cloud Files, Google Storage or Azure Storage.
 
 Installation:
 
@@ -9,12 +10,8 @@ Installation:
 
 Usage:
 
-    python -m wheelhouse_uploader \
-        --provider=CLOUDFILES_US \
-        --username=mycloudaccountid \
-        --secret=xxx \
-        --local-folder dist/ \
-        my_wheelhouse
+    python -m wheelhouse_uploader --username=mycloudaccountid --secret=xxx \
+        --local-folder=dist/ my_wheelhouse
 
 or:
 
@@ -24,8 +21,8 @@ or:
 
 
 The files in the `dist/` folder will be uploaded to a container named
-`my_wheelhouse` on the `CLOUDFILES_US` (Rackspace) cloud storage provider.
+`my_wheelhouse` on the `CLOUDFILES` (Rackspace) cloud storage provider.
 
-See the [Apache Libcloud documentation](
-https://libcloud.readthedocs.org/en/latest/storage/supported_providers.html)
-for the complete list of supported providers.
+You can pass a custom `--provider` param to select the cloud storage from
+the list of [supported providers](
+https://libcloud.readthedocs.org/en/latest/storage/supported_providers.html).
