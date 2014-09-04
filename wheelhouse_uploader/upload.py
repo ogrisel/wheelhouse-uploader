@@ -1,6 +1,7 @@
 from __future__ import division
 import subprocess
 import os
+from io import StringIO
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -11,20 +12,27 @@ from libcloud.storage.types import ContainerDoesNotExistError
 
 class Uploader(object):
 
-    def __init__(self, options):
-        self.options = options
+    index_filename = "index.html"
+
+    def __init__(self, username, secret, provider_name, update_index=True,
+                 max_workers=4):
+        self.username = username
+        self.secret = secret
+        self.provider_name = provider_name
+        self.max_workers = max_workers
+        self.update_index = update_index
 
     def make_driver(self):
-        provider = getattr(Provider, self.options.provider_name)
-        return get_driver(provider)(self.options.username, self.options.secret)
+        provider = getattr(Provider, self.provider_name)
+        return get_driver(provider)(self.username, self.secret)
 
     def upload(self, local_folder, container_name):
         # check that the container is reachable
         driver = self.make_driver()
         try:
-            driver.get_container(container_name)
+            container = driver.get_container(container_name)
         except ContainerDoesNotExistError:
-            driver.create_container(container_name)
+            container = driver.create_container(container_name)
 
         filepaths = []
         for filename in os.listdir(local_folder):
@@ -36,7 +44,7 @@ class Uploader(object):
             # TODO: use a threadpool
             filepaths.append(filepath)
 
-        with ThreadPoolExecutor(max_workers=self.options.max_workers) as e:
+        with ThreadPoolExecutor(max_workers=self.max_workers) as e:
             # Dispatch the file uploads in threads
             futures = [e.submit(self.upload_file, filepath, container_name)
                        for filepath in filepaths]
@@ -44,6 +52,22 @@ class Uploader(object):
                 # We don't expect any returned results be we ant to raise
                 # an exception in case if problem
                 future.result()
+
+        if self.update_index:
+            # TODO use a mako template instead
+            objects = driver.list_container_objects(container)
+            print('Updating index.html with %d links' % len(objects))
+            payload = StringIO()
+            payload.write('<html><body><p>\n')
+            for object_ in objects:
+                if object_.name != self.index_filename:
+                    payload.write('<li><a href="%s">%s<a></li>\n'
+                        % (object_.name, object_.name))
+            payload.write('</p></body></html>\n')
+            payload.seek(0)
+            driver.upload_object_via_stream(iterator=payload,
+                                            container=container,
+                                            object_name=self.index_filename)
 
     def upload_file(self, filepath, container_name):
         # drivers are not thread safe, hence we create one per upload task
@@ -57,3 +81,12 @@ class Uploader(object):
             driver.upload_object_via_stream(iterator=byte_stream,
                                             container=container,
                                             object_name=filename)
+
+    def get_container_cdn_url(self, container_name):
+        driver = self.make_driver()
+        container = driver.get_container(container_name)
+        if hasattr(driver, 'ex_enable_static_website'):
+            driver.ex_enable_static_website(container,
+                                            index_file=self.index_filename)
+        driver.enable_container_cdn(container)
+        return driver.get_container_cdn_url(container)
