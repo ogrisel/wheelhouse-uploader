@@ -58,12 +58,12 @@ class Uploader(object):
             objects = driver.list_container_objects(container)
             print('Updating index.html with %d links' % len(objects))
             payload = StringIO()
-            payload.write('<html><body><p>\n')
+            payload.write(u'<html><body><p>\n')
             for object_ in objects:
                 if object_.name != self.index_filename:
-                    payload.write('<li><a href="%s">%s<a></li>\n'
+                    payload.write(u'<li><a href="%s">%s<a></li>\n'
                         % (object_.name, object_.name))
-            payload.write('</p></body></html>\n')
+            payload.write(u'</p></body></html>\n')
             payload.seek(0)
             driver.upload_object_via_stream(iterator=payload,
                                             container=container,
