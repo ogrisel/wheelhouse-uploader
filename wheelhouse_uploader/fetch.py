@@ -90,15 +90,19 @@ def download(url, filepath, buffer_size=int(1e6), overwrite=False):
         return
     print('downloading %s' % url)
     with open(filepath, 'wb') as f:
-        with urlopen(url) as remote:
+        remote = urlopen(url)
+        try:
             data = remote.read(buffer_size)
             while data:
                 f.write(data)
                 data = remote.read(buffer_size)
+        finally:
+            if hasattr(remote, 'close'):
+                remote.close()
 
 
-def fetch_artifacts(index_url, folder, project_name, version=None,
-                    max_workers=4):
+def download_artifacts(index_url, folder, project_name, version=None,
+                       max_workers=4):
     # TODO: use correct encoding
     html_index = urlopen(index_url).read().decode('utf-8')
     artifacts = []
@@ -123,7 +127,7 @@ def fetch_artifacts(index_url, folder, project_name, version=None,
 
         artifacts.append((url, os.path.join(folder, filename)))
     if not artifacts:
-        print('could not find any matching artifact on %s' % url)
+        print('could not find any matching artifact on %s' % index_url)
         return
 
     print('found %d artifacts to download to %s' % (len(artifacts), folder))

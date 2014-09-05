@@ -14,12 +14,12 @@ try:
     import wheelhouse_uploader.cmd
     cmdclass = vars(wheelhouse_uploader.cmd)
 except ImportError:
-    pass
+    cmdclass = {}
 
 
 setup(
     name="wheelhouse-uploader",
-    version="0.4.0b1",
+    version="0.4.0",
     description="Upload wheels to any cloud storage supported by Libcloud",
     maintainer="Olivier Grisel",
     maintainer_email="olivier.grisel@ensta.org",

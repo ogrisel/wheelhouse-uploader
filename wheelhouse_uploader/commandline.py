@@ -4,7 +4,7 @@ import os
 from libcloud.common.types import InvalidCredsError
 import libcloud.security
 from wheelhouse_uploader.upload import Uploader
-from wheelhouse_uploader.fetch import fetch_artifacts
+from wheelhouse_uploader.fetch import download_artifacts
 
 
 def parse_args():
@@ -100,6 +100,6 @@ def main():
     if options.command == 'upload':
         return handle_upload(options)
     elif options.command == 'fetch':
-        fetch_artifacts(options.url, options.local_folder,
-                        project_name=options.project_name,
-                        version=options.version)
+        download_artifacts(options.url, options.local_folder,
+                           project_name=options.project_name,
+                           version=options.version)
