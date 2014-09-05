@@ -81,7 +81,7 @@ def _parse_source_filename(project_name, basename):
         raise ValueError('File %s.tar.gz does not match project name %s'
                          % (basename, project_name))
     version = basename[len(project_name) + 1:]
-    return (version, None, 'sdist')
+    return (version, '', 'sdist')
 
 
 def download(url, filepath, buffer_size=int(1e6), overwrite=False):

@@ -9,6 +9,14 @@ try:
 except ImportError:
     from distutils.core import setup
 
+try:
+    # For dogfooding only
+    import wheelhouse_uploader.cmd
+    cmdclass = vars(wheelhouse_uploader.cmd)
+except ImportError:
+    pass
+
+
 setup(
     name="wheelhouse-uploader",
     version="0.4.0b1",
@@ -39,4 +47,5 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
      ],
+     cmdclass=cmdclass,
 )
