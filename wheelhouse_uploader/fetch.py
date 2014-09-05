@@ -24,11 +24,19 @@ def parse_filename(project_name, filename):
     ...                'scikit-learn-0.15.1-rc.win-amd64-py2.7.exe')
     ('0.15.1-rc', '2.7', 'bdist_wininst')
 
+    >>> parse_filename('scikit-learn',
+    ...               'scikit-learn-0.15.2.win32-py2.7.exe')
+    ('0.15.2', '2.7', 'bdist_wininst')
+
     >>> parse_filename('scikit-learn', 'scikit-learn-0.15.1.tar.gz')
-    ('0.15.1', None, 'sdist')
+    ('0.15.1', '', 'sdist')
 
     >>> parse_filename('scikit-learn', 'scikit-learn-0.15.1.zip')
-    ('0.15.1', None, 'sdist')
+    ('0.15.1', '', 'sdist')
+
+    >>> parse_filename('scikit-learn',
+    ...     'scikit_learn-0.15.1-cp34-cp34m-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.whl')
+    ('0.15.1', '3.4', 'bdist_wheel')
 
     """
     if filename.endswith('.whl'):
@@ -49,7 +57,7 @@ def _parse_wheel_filename(project_name, basename):
         raise ValueError('File %s.whl does not match project name %s'
                          % (basename, project_name))
 
-    if len(components) < 3 or not len(components[2]) > 4:
+    if len(components) < 3 or not len(components[2]) >= 4:
         raise ValueError('Invalid wheel filename %s.whl' % basename)
     version = components[1]
     pytag = components[2]
