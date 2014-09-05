@@ -49,8 +49,8 @@ class Uploader(object):
             futures = [e.submit(self.upload_file, filepath, container_name)
                        for filepath in filepaths]
             for future in as_completed(futures):
-                # We don't expect any returned results be we ant to raise
-                # an exception in case if problem
+                # We don't expect any returned results be we want to raise
+                # an exception early in case if problem
                 future.result()
 
         if self.update_index:

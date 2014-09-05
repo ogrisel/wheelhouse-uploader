@@ -4,40 +4,69 @@ import os
 from libcloud.common.types import InvalidCredsError
 import libcloud.security
 from wheelhouse_uploader.upload import Uploader
+from wheelhouse_uploader.fetch import fetch_artifacts
+
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Upload wheel packages.')
-    parser.add_argument('container_name',
-                        help='name of the target container')
-    parser.add_argument('--local-folder', default='.',
+    parser = argparse.ArgumentParser(
+        description='Manage Python build artifacts',
+    )
+    subparsers = parser.add_subparsers(
+        title='Commands',
+    )
+
+    # Options for the upload sub command:
+    upload = subparsers.add_parser(
+        'upload', help='Attach a local folder to a Nuxeo server.',
+    )
+    upload.set_defaults(command='upload')
+
+    upload.add_argument('container_name', help='name of the target container')
+    upload.add_argument('--local-folder', default='dist',
                         help='path to the folder to upload')
-    parser.add_argument('--username',
-                        help='account name for the cloud storage')
-    parser.add_argument('--secret',
+    upload.add_argument('--username',
+                              help='account name for the cloud storage')
+    upload.add_argument('--secret',
                         help='secret API key for the cloud storage')
-    parser.add_argument('--provider-name', default='CLOUDFILES',
+    upload.add_argument('--provider-name', default='CLOUDFILES',
                         help='Apache Libcloud cloud storage provider')
-    parser.add_argument('--max-workers', type=int, default=4,
+    upload.add_argument('--max-workers', type=int, default=4,
                         help='maximum number of concurrent uploads')
-    parser.add_argument('--no-ssl-check', default=False, action="store_true",
-                        help='Disable SSL certificate validation')
-    parser.add_argument('--no-enable-cdn', default=False, action="store_true",
-                        help='Do not publish the container on CDN')
-    parser.add_argument('--no-update-index', default=False, action="store_true",
-                        help='Build an index.html file')
-    options = parser.parse_args()
+    upload.add_argument('--no-ssl-check', default=False,
+                        action="store_true",
+                        help='disable SSL certificate validation')
+    upload.add_argument('--no-enable-cdn', default=False,
+                        action="store_true",
+                        help='do not publish the container on CDN')
+    upload.add_argument('--no-update-index', default=False,
+                        action="store_true",
+                        help='build an index.html file')
+
+    # Options for the fetch sub command:
+    fetch = subparsers.add_parser(
+        'fetch', help='Collect build artifacts from an HTML page.',
+    )
+    fetch.set_defaults(command='fetch')
+    fetch.add_argument('project_name', help='name of the project')
+    fetch.add_argument('url', help='url of the HTML index page.')
+    fetch.add_argument('--version', help='version of the artifact to collect')
+    fetch.add_argument('--local-folder', default='dist',
+                       help='path to the folder to store fetched items')
+    return parser.parse_args()
+
+
+
+def handle_upload(options):
     if not options.username:
         options.username = os.environ.get('WHEELHOUSE_UPLOADER_USERNAME')
+
     if not options.secret:
         options.secret = os.environ.get('WHEELHOUSE_UPLOADER_SECRET')
-    return options
 
-
-def main():
-    options = parse_args()
     if not options.username:
         print("username required")
         sys.exit(1)
+
     if not options.secret:
         print("secret API key required")
         sys.exit(1)
@@ -64,3 +93,13 @@ def main():
     except InvalidCredsError:
         print("Invalid credentials")
         sys.exit(1)
+
+
+def main():
+    options = parse_args()
+    if options.command == 'upload':
+        return handle_upload(options)
+    elif options.command == 'fetch':
+        fetch_artifacts(options.url, options.local_folder,
+                        project_name=options.project_name,
+                        version=options.version)
