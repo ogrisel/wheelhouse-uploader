@@ -6,6 +6,7 @@ except ImportError:
 import re
 import os
 import sys
+import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 link_pattern = re.compile(r'\bhref="([^"]+)"')
@@ -97,7 +98,8 @@ def download(url, filepath, buffer_size=int(1e6), overwrite=False):
         print('%s already exists' % filepath)
         return
     print('downloading %s' % url)
-    with open(filepath, 'wb') as f:
+    tmp_filepath = filepath + '.part'
+    with open(tmp_filepath, 'wb') as f:
         remote = urlopen(url)
         try:
             data = remote.read(buffer_size)
@@ -107,6 +109,10 @@ def download(url, filepath, buffer_size=int(1e6), overwrite=False):
         finally:
             if hasattr(remote, 'close'):
                 remote.close()
+    # download was successful: rename to the final name:
+    if os.path.exists(filepath):
+        os.unlink(filepath)
+    shutil.move(tmp_filepath, filepath)
 
 
 def download_artifacts(index_url, folder, project_name, version=None,
@@ -118,6 +124,8 @@ def download_artifacts(index_url, folder, project_name, version=None,
         link = match.group(1)
         if index_url.endswith('/'):
             url = index_url + link
+        elif index_url.endswith('.html'):
+            url = index_url.rsplit('/', 1)[0] + '/' + link
         else:
             url = index_url + '/' + link
         if '/' in link:
