@@ -111,8 +111,10 @@ Note: this will reuse PyPI credentials stored in `$HOME/.pypirc` if
 
 ### TODO
 
-- test on has many cloud storage providers as possible (please send an email to
-  olivier.grisel@ensta.org if you can make it work on a non-Rackspace provder),
-- check that CDN activation works everywhere,
+- test on as many cloud storage providers as possible (please send an email to
+  olivier.grisel@ensta.org if you can make it work on a non-Rackspace provider),
+- check that CDN activation works everywhere (it's failing on Rackspace
+  currently: need to investigate) otherwise the workaround is to enable CDN
+  manually in the management web UI,
 - make it possible to fetch private artifacts using the cloud storage protocol
   instead of HTML index pages.
