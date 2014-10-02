@@ -30,6 +30,8 @@ def parse_args():
                         help='secret API key for the cloud storage')
     upload.add_argument('--provider-name', default='CLOUDFILES',
                         help='Apache Libcloud cloud storage provider')
+    upload.add_argument('--region', default='ord',
+                        help='Apache Libcloud cloud storage provider region')
     upload.add_argument('--max-workers', type=int, default=4,
                         help='maximum number of concurrent uploads')
     upload.add_argument('--no-ssl-check', default=False,
@@ -79,6 +81,7 @@ def handle_upload(options):
     try:
         uploader = Uploader(options.username, options.secret,
                             options.provider_name,
+                            region=options.region,
                             update_index=not options.no_update_index,
                             max_workers=options.max_workers)
         uploader.upload(options.local_folder, options.container_name)

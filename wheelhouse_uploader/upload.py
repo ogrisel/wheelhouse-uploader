@@ -15,17 +15,18 @@ class Uploader(object):
 
     index_filename = "index.html"
 
-    def __init__(self, username, secret, provider_name, update_index=True,
+    def __init__(self, username, secret, provider_name, region, update_index=True,
                  max_workers=4):
         self.username = username
         self.secret = secret
         self.provider_name = provider_name
+        self.region = region
         self.max_workers = max_workers
         self.update_index = update_index
 
     def make_driver(self):
         provider = getattr(Provider, self.provider_name)
-        return get_driver(provider)(self.username, self.secret)
+        return get_driver(provider)(self.username, self.secret, region=self.region)
 
     def upload(self, local_folder, container, retry_on_error=3):
         """Wrapper to make upload more robust to random server errors"""
