@@ -6,6 +6,7 @@ from io import StringIO
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from libcloud.common.types import InvalidCredsError
 from libcloud.storage.types import Provider, ContainerDoesNotExistError
 from libcloud.storage.providers import get_driver
 from libcloud.storage.types import ContainerDoesNotExistError
