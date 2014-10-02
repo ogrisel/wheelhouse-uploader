@@ -1,6 +1,7 @@
 from __future__ import division
 import subprocess
 import os
+from time import sleep
 from io import StringIO
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -26,7 +27,21 @@ class Uploader(object):
         provider = getattr(Provider, self.provider_name)
         return get_driver(provider)(self.username, self.secret)
 
-    def upload(self, local_folder, container_name):
+    def upload(self, local_folder, container, retry_on_error=3):
+        """Wrapper to make upload more robust to random server errors"""
+        try:
+            self._upload(local_folder, container)
+        except InvalidCredsError:
+            raise
+        except Exception:
+            if retry_on_error <= 0:
+                raise
+            # can be caused by any network or server side failure
+            sleep(1)
+            self.upload(local_folder, container,
+                        retry_on_error=retry_on_error - 1)
+
+    def _upload(self, local_folder, container_name):
         # check that the container is reachable
         driver = self.make_driver()
         try:

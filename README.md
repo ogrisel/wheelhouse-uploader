@@ -41,7 +41,7 @@ or:
 
     export WHEELHOUSE_UPLOADER_USERNAME=mycloudaccountid
     export WHEELHOUSE_UPLOADER_SECRET=xxx
-    python -m wheelhouse_uploader --local-folder dist/ my_wheelhouse
+    python -m wheelhouse_uploader upload --local-folder dist/ my_wheelhouse
 
 When used in a CI setup such as http://travis-ci.org or http://appveyor.com,
 the environment variables are typically configured in the CI configuration
