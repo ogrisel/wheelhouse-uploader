@@ -1,8 +1,11 @@
 from __future__ import division
 import subprocess
 import os
+import json
+from hashlib import sha256
 from time import sleep
 from io import StringIO
+from io import BytesIO
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -10,11 +13,14 @@ from libcloud.common.types import InvalidCredsError
 from libcloud.storage.types import Provider, ContainerDoesNotExistError
 from libcloud.storage.providers import get_driver
 from libcloud.storage.types import ContainerDoesNotExistError
+from libcloud.storage.types import ObjectDoesNotExistError
 
 
 class Uploader(object):
 
     index_filename = "index.html"
+
+    metadata_filename = 'metadata.json'
 
     def __init__(self, username, secret, provider_name, region, update_index=True,
                  max_workers=4):
@@ -51,7 +57,19 @@ class Uploader(object):
         except ContainerDoesNotExistError:
             container = driver.create_container(container_name)
 
+        try:
+            metadata_obj = container.get_object(self.metadata_filename)
+            content = StringIO()
+            for bytes_ in metadata_obj.as_stream():
+                content.write(bytes_.decode('utf-8'))
+            content.seek(0)
+            metadata = json.load(content)
+        except ObjectDoesNotExistError:
+            metadata = {}
+
         filepaths = []
+        local_metadata = {}
+
         for filename in os.listdir(local_folder):
             if filename.startswith('.'):
                 continue
@@ -60,6 +78,11 @@ class Uploader(object):
                 continue
             # TODO: use a threadpool
             filepaths.append(filepath)
+            content = open(filepath, 'rb').read()
+            local_metadata[filename] = dict(
+                sha256=sha256(content).hexdigest(),
+                size=len(content),
+            )
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as e:
             # Dispatch the file uploads in threads
@@ -70,6 +93,13 @@ class Uploader(object):
                 # an exception early in case if problem
                 future.result()
 
+        print('Uploading %s' % self.metadata_filename)
+        metadata.update(local_metadata)
+        metadata_json_bytes = BytesIO(json.dumps(metadata).encode('utf-8'))
+        driver.upload_object_via_stream(iterator=metadata_json_bytes,
+                                        container=container,
+                                        object_name=self.metadata_filename)
+
         if self.update_index:
             # TODO use a mako template instead
             objects = driver.list_container_objects(container)
@@ -77,9 +107,15 @@ class Uploader(object):
             payload = StringIO()
             payload.write(u'<html><body><p>\n')
             for object_ in objects:
-                if object_.name != self.index_filename:
-                    payload.write(u'<li><a href="%s">%s<a></li>\n'
-                        % (object_.name, object_.name))
+                if not object_.name.endswith(('.json', '.html')):
+                    object_metadata = metadata.get(object_.name, {})
+                    digest = object_metadata.get('sha256')
+                    if digest is not None:
+                        payload.write(u'<li><a href="%s#sha256=%s">%s<a></li>\n'
+                            % (object_.name, digest, object_.name))
+                    else:
+                        payload.write(u'<li><a href="%s">%s<a></li>\n'
+                            % (object_.name, object_.name))
             payload.write(u'</p></body></html>\n')
             payload.seek(0)
             driver.upload_object_via_stream(iterator=payload,
