@@ -25,7 +25,7 @@ def parse_args():
     upload.add_argument('--local-folder', default='dist',
                         help='path to the folder to upload')
     upload.add_argument('--username',
-                              help='account name for the cloud storage')
+                        help='account name for the cloud storage')
     upload.add_argument('--secret',
                         help='secret API key for the cloud storage')
     upload.add_argument('--provider-name', default='CLOUDFILES',
@@ -43,6 +43,9 @@ def parse_args():
     upload.add_argument('--no-update-index', default=False,
                         action="store_true",
                         help='build an index.html file')
+    upload.add_argument('--upload-pull-request', default=False,
+                        action="store_true",
+                        help='upload even if it is a pull request')
 
     # Options for the fetch sub command:
     fetch = subparsers.add_parser(
@@ -55,7 +58,6 @@ def parse_args():
     fetch.add_argument('--local-folder', default='dist',
                        help='path to the folder to store fetched items')
     return parser.parse_args()
-
 
 
 def handle_upload(options):
@@ -72,6 +74,15 @@ def handle_upload(options):
     if not options.secret:
         print("secret API key required")
         sys.exit(1)
+
+    if (not options.upload_pull_request and
+        (os.environ.get('APPVEYOR_PULL_REQUEST_NUMBER')
+         or os.environ.get('TRAVIS_PULL_REQUEST', 'false') != 'false'
+         )):
+        print('Skipping upload of packages for pull request.')
+        print('Use --upload-pull-request to force upload even on pull '
+              'requests.')
+        sys.exit(0)
 
     if options.no_ssl_check:
         # This is needed when the host OS such as Windows does not make
