@@ -2,12 +2,7 @@
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          MinRK
 # LICENSE: MIT
-try:
-    # To add support for python setup.py develop and
-    # install_requires
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup
 
 try:
     # For dogfooding only
@@ -19,7 +14,7 @@ except ImportError:
 
 setup(
     name="wheelhouse-uploader",
-    version="0.6.0",
+    version="0.7.0",
     description="Upload wheels to any cloud storage supported by Libcloud",
     maintainer="Olivier Grisel",
     maintainer_email="olivier.grisel@ensta.org",
@@ -29,6 +24,7 @@ setup(
         'wheelhouse_uploader',
     ],
     install_requires=[
+        "setuptools>=0.9",  # required for PEP 440 version parsing
         "futures",
         "apache-libcloud",
     ],

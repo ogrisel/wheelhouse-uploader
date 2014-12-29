@@ -12,6 +12,7 @@ except ImportError:
 from distutils.cmd import Command
 from distutils.command.upload import upload
 from distutils.errors import DistutilsOptionError
+from pkg_resources import safe_version
 
 from wheelhouse_uploader.fetch import parse_filename
 from wheelhouse_uploader.fetch import download_artifacts
@@ -47,8 +48,8 @@ class fetch_artifacts(Command):
         project_name = metadata.get_name()
         version = metadata.get_version()
         for index_url in self.index_urls:
-            download_artifacts(index_url, 'dist', project_name, version=version,
-                               max_workers=4)
+            download_artifacts(index_url, 'dist', project_name,
+                               version=version, max_workers=4)
 
 
 class upload_all(upload):
@@ -56,7 +57,7 @@ class upload_all(upload):
     def run(self):
         metadata = self.distribution.metadata
         project_name = metadata.get_name()
-        version = metadata.get_version()
+        version = safe_version(metadata.get_version())
         print("Collecting artifacts for %s==%s in 'dist' folder:" %
               (project_name, version))
         dist_files = []

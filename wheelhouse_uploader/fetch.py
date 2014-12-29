@@ -7,6 +7,7 @@ import re
 import os
 import sys
 import shutil
+from pkg_resources import safe_version
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 link_pattern = re.compile(r'\bhref="([^"]+)"')
@@ -23,11 +24,11 @@ def parse_filename(project_name, filename):
 
     >>> parse_filename('scikit-learn',
     ...                'scikit-learn-0.15.1rc.win-amd64-py2.7.exe')
-    ('0.15.1rc', '2.7', 'bdist_wininst')
+    ('0.15.1rc0', '2.7', 'bdist_wininst')
 
     >>> parse_filename('scikit-learn',
     ...                'scikit_learn-0.15.2.dev-cp34-none-win32.whl')
-    ('0.15.2.dev', '3.4', 'bdist_wheel')
+    ('0.15.2.dev0', '3.4', 'bdist_wheel')
 
     >>> parse_filename('scikit-learn',
     ...                'scikit_learn-0.15.dev0-cp27-none-win32.whl')
@@ -61,6 +62,7 @@ def parse_filename(project_name, filename):
         raise ValueError('Invalid filename "%s", unrecognized extension'
                          % filename)
 
+
 def _parse_wheel_filename(project_name, basename):
     components = basename.split('-')
     if not components[0] == project_name.replace('-', '_'):
@@ -80,7 +82,7 @@ def _parse_wheel_filename(project_name, basename):
     else:
         raise ValueError('Invalid Python version tag in filename %s.whl'
                          % basename)
-    return (version, pyversion, 'bdist_wheel')
+    return (safe_version(version), pyversion, 'bdist_wheel')
 
 
 def _parse_exe_filename(project_name, basename):
@@ -91,7 +93,7 @@ def _parse_exe_filename(project_name, basename):
     metadata_block, pyversion = metadata_block.rsplit('-', 1)
     pyversion = pyversion[2:]
     version, platform = metadata_block.rsplit('.', 1)
-    return (version, pyversion, 'bdist_wininst')
+    return (safe_version(version), pyversion, 'bdist_wininst')
 
 
 def _parse_source_filename(project_name, basename):
@@ -99,7 +101,7 @@ def _parse_source_filename(project_name, basename):
         raise ValueError('File %s.tar.gz does not match project name %s'
                          % (basename, project_name))
     version = basename[len(project_name) + 1:]
-    return (version, '', 'sdist')
+    return (safe_version(version), '', 'sdist')
 
 
 def download(url, filepath, buffer_size=int(1e6), overwrite=False):
@@ -124,13 +126,12 @@ def download(url, filepath, buffer_size=int(1e6), overwrite=False):
     shutil.move(tmp_filepath, filepath)
 
 
-def download_artifacts(index_url, folder, project_name, version=None,
-                       max_workers=4):
+def _parse_html(index_url, folder, project_name, version=None):
     # TODO: use correct encoding
-    html_index = urlopen(index_url).read().decode('utf-8')
+    html_content = urlopen(index_url).read().decode('utf-8')
     artifacts = []
     found_versions = set()
-    for match in re.finditer(link_pattern, html_index):
+    for match in re.finditer(link_pattern, html_content):
         link = match.group(1)
         if index_url.endswith('/'):
             url = index_url + link
@@ -138,13 +139,16 @@ def download_artifacts(index_url, folder, project_name, version=None,
             url = index_url.rsplit('/', 1)[0] + '/' + link
         else:
             url = index_url + '/' + link
+        if '#' in link:
+            # TODO: parse digest info to detect any file content corruption
+            link, _ = link.split('#', 1)
         if '/' in link:
             _, filename = link.rsplit('/', 1)
         else:
             filename = link
         try:
             file_version, _, _ = parse_filename(project_name, filename)
-        except ValueError as e:
+        except ValueError:
             # not a supported artifact
             continue
 
@@ -153,6 +157,15 @@ def download_artifacts(index_url, folder, project_name, version=None,
             continue
 
         artifacts.append((url, os.path.join(folder, filename)))
+    return artifacts, list(sorted(found_versions))
+
+
+def download_artifacts(index_url, folder, project_name, version=None,
+                       max_workers=4):
+    if version is not None:
+        version = safe_version(version)
+    artifacts, found_versions = _parse_html(index_url, folder, project_name,
+                                            version=version)
     if not artifacts:
         print('Could not find any matching artifact for project "%s" on %s'
               % (project_name, index_url))
