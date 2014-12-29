@@ -92,7 +92,8 @@ Ensure that the `setup.py` file of the project registers the
         cmdclass=vars(wheelhouse_uploader.cmd)
     )
 
-Put the URL of the public artifact repositories populated by the CI workers:
+Put the URL of the public artifact repositories populated by the CI workers
+in the `setup.cfg` file of the project:
 
     [wheelhouse_uploader]
     artifact_indexes=
