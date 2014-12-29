@@ -85,8 +85,8 @@ class Uploader(object):
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as e:
             # Dispatch the file uploads in threads
-            futures = [e.submit(self.upload_file, filepath, container_name)
-                       for filepath in filepaths]
+            futures = [e.submit(self.upload_file, filepath_, container_name)
+                       for filepath_ in filepaths]
             for future in as_completed(futures):
                 # We don't expect any returned results be we want to raise
                 # an exception early in case if problem
