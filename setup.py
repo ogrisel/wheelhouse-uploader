@@ -23,11 +23,13 @@ setup(
     packages=[
         'wheelhouse_uploader',
     ],
+    setup_requires=['setuptools-markdown'],
     install_requires=[
         "setuptools>=0.9",  # required for PEP 440 version parsing
         "futures",
         "apache-libcloud",
     ],
+    long_description_markdown_filename='README.md',
     classifiers=[
         'License :: OSI Approved',
         'Programming Language :: Python',
@@ -42,6 +44,6 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
-     ],
-     cmdclass=cmdclass,
+    ],
+    cmdclass=cmdclass,
 )
