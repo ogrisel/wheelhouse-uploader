@@ -1,17 +1,15 @@
 from __future__ import division
-import subprocess
 import os
 import json
 from hashlib import sha256
 from time import sleep
 from io import StringIO
 from io import BytesIO
-from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from libcloud.common.types import InvalidCredsError
-from libcloud.storage.types import Provider, ContainerDoesNotExistError
 from libcloud.storage.providers import get_driver
+from libcloud.storage.types import Provider
 from libcloud.storage.types import ContainerDoesNotExistError
 from libcloud.storage.types import ObjectDoesNotExistError
 
@@ -33,7 +31,8 @@ class Uploader(object):
 
     def make_driver(self):
         provider = getattr(Provider, self.provider_name)
-        return get_driver(provider)(self.username, self.secret, region=self.region)
+        return get_driver(provider)(self.username, self.secret,
+                                    region=self.region)
 
     def upload(self, local_folder, container, retry_on_error=3):
         """Wrapper to make upload more robust to random server errors"""
@@ -111,11 +110,12 @@ class Uploader(object):
                     object_metadata = metadata.get(object_.name, {})
                     digest = object_metadata.get('sha256')
                     if digest is not None:
-                        payload.write(u'<li><a href="%s#sha256=%s">%s<a></li>\n'
+                        payload.write(
+                            u'<li><a href="%s#sha256=%s">%s<a></li>\n'
                             % (object_.name, digest, object_.name))
                     else:
                         payload.write(u'<li><a href="%s">%s<a></li>\n'
-                            % (object_.name, object_.name))
+                                      % (object_.name, object_.name))
             payload.write(u'</p></body></html>\n')
             payload.seek(0)
             driver.upload_object_via_stream(iterator=payload,
