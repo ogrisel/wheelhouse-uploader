@@ -12,16 +12,15 @@ Amazon S3, Rackspace Cloud Files, Google Storage or Azure Storage.
 
 The canonical use case is:
 
-1- Continuous Integration (CI) servers build and test the project packages for
+1- Continuous Integration (CI) workers build and test the project packages for
    various platforms and versions of Python, for instance using the commands:
 
         pip install wheel
         python setup.py bdist_wheel
 
-2- All CI servers upload the resulting packages using `wheelhouse-uploader`
-   to upload the generated artifacts to one or more cloud storage containers
-   (e.g. one container per platform, or one for the master branch and the other
-   for release tags).
+2- CI workers use `wheelhouse-uploader` to upload the generated artifacts
+   to one or more cloud storage containers (e.g. one container per platform,
+   or one for the master branch and the other for release tags).
 
 3- The project maintainer uses the `wheelhouse-uploader` distutils extensions
    to fetch all the generated build artifacts for a specific version number to
@@ -79,17 +78,19 @@ web page with an index with HTML links to the project files:
 Ensure that the `setup.py` file of the project registers the
 `wheelhouse-uploader` distutils extensions:
 
+    cmdclass = {}
     try:
-        # Only used by the release manager of the project
+        # Used by the release manager of the project to add support for:
+        # python setup.py sdist fetch_artifacts upload_all
         import wheelhouse_uploader.cmd
-        cmdclass = vars(wheelhouse_uploader.cmd)
+        cmdclass.update(vars(wheelhouse_uploader.cmd))
     except ImportError:
-        cmdclass = {}
+        pass
     ...
 
     setup(
         ...
-        cmdclass=vars(wheelhouse_uploader.cmd)
+        cmdclass=cmdclass,
     )
 
 Put the URL of the public artifact repositories populated by the CI workers
