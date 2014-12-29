@@ -22,8 +22,16 @@ def parse_filename(project_name, filename):
     ('0.15.2', '3.4', 'bdist_wheel')
 
     >>> parse_filename('scikit-learn',
-    ...                'scikit-learn-0.15.1-rc.win-amd64-py2.7.exe')
-    ('0.15.1-rc', '2.7', 'bdist_wininst')
+    ...                'scikit-learn-0.15.1rc.win-amd64-py2.7.exe')
+    ('0.15.1rc', '2.7', 'bdist_wininst')
+
+    >>> parse_filename('scikit-learn',
+    ...                'scikit_learn-0.15.2.dev-cp34-none-win32.whl')
+    ('0.15.2.dev', '3.4', 'bdist_wheel')
+
+    >>> parse_filename('scikit-learn',
+    ...                'scikit_learn-0.15.dev0-cp27-none-win32.whl')
+    ('0.15.dev0', '2.7', 'bdist_wheel')
 
     >>> parse_filename('scikit-learn',
     ...               'scikit-learn-0.15.2.win32-py2.7.exe')
@@ -36,7 +44,8 @@ def parse_filename(project_name, filename):
     ('0.15.1', '', 'sdist')
 
     >>> parse_filename('scikit-learn',
-    ...     'scikit_learn-0.15.1-cp34-cp34m-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.whl')
+    ...     'scikit_learn-0.15.1-cp34-cp34m-macosx_10_6_intel'
+    ...     '.macosx_10_9_intel.macosx_10_9_x86_64.whl')
     ('0.15.1', '3.4', 'bdist_wheel')
 
     """
@@ -120,6 +129,7 @@ def download_artifacts(index_url, folder, project_name, version=None,
     # TODO: use correct encoding
     html_index = urlopen(index_url).read().decode('utf-8')
     artifacts = []
+    found_versions = set()
     for match in re.finditer(link_pattern, html_index):
         link = match.group(1)
         if index_url.endswith('/'):
@@ -138,12 +148,17 @@ def download_artifacts(index_url, folder, project_name, version=None,
             # not a supported artifact
             continue
 
-        if version and file_version != version:
+        if version is not None and file_version != version:
+            found_versions.add(file_version)
             continue
 
         artifacts.append((url, os.path.join(folder, filename)))
     if not artifacts:
-        print('could not find any matching artifact on %s' % index_url)
+        print('Could not find any matching artifact for project "%s" on %s'
+              % (project_name, index_url))
+        if version is not None:
+            print("Requested version: %s" % version)
+            print("Available versions: %s" % ", ".join(sorted(found_versions)))
         return
 
     print('found %d artifacts to download to %s' % (len(artifacts), folder))
@@ -151,8 +166,8 @@ def download_artifacts(index_url, folder, project_name, version=None,
         os.makedirs(folder)
     with ThreadPoolExecutor(max_workers=max_workers) as e:
         # Dispatch the file download in threads
-        futures = [e.submit(download, url, filepath)
-                   for url, filepath in artifacts]
+        futures = [e.submit(download, url_, filepath)
+                   for url_, filepath in artifacts]
         for future in as_completed(futures):
             # We don't expect any returned results be we want to raise
             # an exception early in case if problem
