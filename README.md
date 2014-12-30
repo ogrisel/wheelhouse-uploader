@@ -78,6 +78,7 @@ web page with an index with HTML links to the project files:
 Ensure that the `setup.py` file of the project registers the
 `wheelhouse-uploader` distutils extensions:
 
+~~~python
     cmdclass = {}
     try:
         # Used by the release manager of the project to add support for:
@@ -92,15 +93,17 @@ Ensure that the `setup.py` file of the project registers the
         ...
         cmdclass=cmdclass,
     )
+~~~
 
 Put the URL of the public artifact repositories populated by the CI workers
 in the `setup.cfg` file of the project:
 
+~~~ini
     [wheelhouse_uploader]
     artifact_indexes=
           http://wheelhouse.site1.org/
           http://wheelhouse.site2.org/
-
+~~~
 
 Fetch all the artifacts matching the current version of the project as
 configured in the local `setup.py` file and upload them all to PyPI:
