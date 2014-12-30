@@ -16,10 +16,10 @@ The canonical use case is:
 
 1- Continuous Integration (CI) workers build and test the project packages for
    various platforms and versions of Python, for instance using the commands:
-    ~~~bash
-    pip install wheel
-    python setup.py bdist_wheel
-    ~~~
+~~~bash
+pip install wheel
+python setup.py bdist_wheel
+~~~
 2- CI workers use `wheelhouse-uploader` to upload the generated artifacts
    to one or more cloud storage containers (e.g. one container per platform,
    or one for the master branch and the other for release tags).
