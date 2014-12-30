@@ -6,7 +6,9 @@ Amazon S3, Rackspace Cloud Files, Google Storage or Azure Storage.
 
 ## Installation
 
-    pip install wheelhouse-uploader
+~~~bash
+pip install wheelhouse-uploader
+~~~
 
 ## Usage
 
@@ -14,10 +16,10 @@ The canonical use case is:
 
 1- Continuous Integration (CI) workers build and test the project packages for
    various platforms and versions of Python, for instance using the commands:
-
-        pip install wheel
-        python setup.py bdist_wheel
-
+    ~~~bash
+    pip install wheel
+    python setup.py bdist_wheel
+    ~~~
 2- CI workers use `wheelhouse-uploader` to upload the generated artifacts
    to one or more cloud storage containers (e.g. one container per platform,
    or one for the master branch and the other for release tags).
@@ -32,15 +34,19 @@ The canonical use case is:
 
 Use the following command:
 
-    python -m wheelhouse_uploader upload \
-        --username=mycloudaccountid --secret=xxx \
-        --local-folder=dist/ my_wheelhouse
+~~~bash
+python -m wheelhouse_uploader upload \
+    --username=mycloudaccountid --secret=xxx \
+    --local-folder=dist/ my_wheelhouse
+~~~
 
 or:
 
-    export WHEELHOUSE_UPLOADER_USERNAME=mycloudaccountid
-    export WHEELHOUSE_UPLOADER_SECRET=xxx
-    python -m wheelhouse_uploader upload --local-folder dist/ my_wheelhouse
+~~~bash
+export WHEELHOUSE_UPLOADER_USERNAME=mycloudaccountid
+export WHEELHOUSE_UPLOADER_SECRET=xxx
+python -m wheelhouse_uploader upload --local-folder dist/ my_wheelhouse
+~~~
 
 When used in a CI setup such as http://travis-ci.org or http://appveyor.com,
 the environment variables are typically configured in the CI configuration
@@ -68,10 +74,11 @@ all artifacts have been uploaded by the CI servers.
 The following command downloads items that have been previously published to a
 web page with an index with HTML links to the project files:
 
-    python -m wheelhouse_uploader fetch \
-        --version=X.Y.Z --local-folder=dist/ \
-        project-name http://wheelhouse.example.org/
-
+~~~bash
+python -m wheelhouse_uploader fetch \
+    --version=X.Y.Z --local-folder=dist/ \
+    project-name http://wheelhouse.example.org/
+~~~
 
 ### Uploading previously archived artifacts to PyPI
 
@@ -79,36 +86,39 @@ Ensure that the `setup.py` file of the project registers the
 `wheelhouse-uploader` distutils extensions:
 
 ~~~python
-    cmdclass = {}
-    try:
-        # Used by the release manager of the project to add support for:
-        # python setup.py sdist fetch_artifacts upload_all
-        import wheelhouse_uploader.cmd
-        cmdclass.update(vars(wheelhouse_uploader.cmd))
-    except ImportError:
-        pass
-    ...
+cmdclass = {}
 
-    setup(
-        ...
-        cmdclass=cmdclass,
-    )
+try:
+    # Used by the release manager of the project to add support for:
+    # python setup.py sdist fetch_artifacts upload_all
+    import wheelhouse_uploader.cmd
+    cmdclass.update(vars(wheelhouse_uploader.cmd))
+except ImportError:
+    pass
+...
+
+setup(
+    ...
+    cmdclass=cmdclass,
+)
 ~~~
 
 Put the URL of the public artifact repositories populated by the CI workers
 in the `setup.cfg` file of the project:
 
 ~~~ini
-    [wheelhouse_uploader]
-    artifact_indexes=
-          http://wheelhouse.site1.org/
-          http://wheelhouse.site2.org/
+[wheelhouse_uploader]
+artifact_indexes=
+    http://wheelhouse.site1.org/
+    http://wheelhouse.site2.org/
 ~~~
 
 Fetch all the artifacts matching the current version of the project as
 configured in the local `setup.py` file and upload them all to PyPI:
 
-    python setup.py fetch_artifacts upload_all
+~~~bash
+python setup.py fetch_artifacts upload_all
+~~~
 
 Note: this will reuse PyPI credentials stored in `$HOME/.pypirc` if
 `python setup.py register` or `upload` were called previously.
