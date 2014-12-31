@@ -6,7 +6,7 @@ package maintainers build wheels for their packages and upload them to PyPI.
 
 The cloud storage containers are typically populated by Continuous Integration
 servers that generate and test binary packages on various platforms (Windows
-and OSX for several versions and architectures fir Python). At release time
+and OSX for several versions and architectures for Python). At release time
 the project maintainer can collect all the generated package for a specific
 version of the project and upload them all at once to PyPI.
 
