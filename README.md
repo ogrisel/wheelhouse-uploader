@@ -1,7 +1,15 @@
 wheelhouse-uploader
 ===================
 
-Upload/download wheels to/from cloud storage using libcloud. Helps package maintainers build wheels for their packages and upload them to PyPI. 
+Upload/download wheels to/from cloud storage using Apache Libcloud. Helps
+package maintainers build wheels for their packages and upload them to PyPI.
+
+The cloud storage containers are typically populated by Continuous Integration
+servers that generate and test binary packages on various platforms (Windows
+and OSX for several versions and architectures fir Python). At release time
+the project maintainer can collect all the generated package for a specific
+version of the project and upload them all at once to PyPI.
+
 
 ## Installation
 
@@ -21,12 +29,18 @@ python setup.py bdist_wheel
 ~~~
 2- CI workers use `wheelhouse-uploader` to upload the generated artifacts
    to one or more cloud storage containers (e.g. one container per platform,
-   or one for the master branch and the other for release tags).
+   or one for the master branch and the other for release tags):
+~~~bash
+python -m wheelhouse_uploader upload container_name
+~~~
 
 3- The project maintainer uses the `wheelhouse-uploader` distutils extensions
    to fetch all the generated build artifacts for a specific version number to
    its local `dist` folder and upload them all at once to PyPI when
    making a release.
+~~~bash
+python setup.py sdist fetch_artifacts upload_all
+~~~
 
 
 ### Uploading artifact to a cloud storage container
