@@ -21,20 +21,20 @@ pip install wheelhouse-uploader
 
 The canonical use case is:
 
-1- Continuous Integration (CI) workers build and test the project packages for
+1. Continuous Integration (CI) workers build and test the project packages for
    various platforms and versions of Python, for instance using the commands:
 ~~~bash
 pip install wheel
 python setup.py bdist_wheel
 ~~~
-2- CI workers use `wheelhouse-uploader` to upload the generated artifacts
+2. CI workers use `wheelhouse-uploader` to upload the generated artifacts
    to one or more cloud storage containers (e.g. one container per platform,
    or one for the master branch and the other for release tags):
 ~~~bash
 python -m wheelhouse_uploader upload container_name
 ~~~
 
-3- The project maintainer uses the `wheelhouse-uploader` distutils extensions
+3. The project maintainer uses the `wheelhouse-uploader` distutils extensions
    to fetch all the generated build artifacts for a specific version number to
    its local `dist` folder and upload them all at once to PyPI when
    making a release.
