@@ -68,12 +68,16 @@ def handle_upload(options):
         options.secret = os.environ.get('WHEELHOUSE_UPLOADER_SECRET')
 
     if not options.username:
-        print("username required")
+        print("Username required")
         sys.exit(1)
 
     if not options.secret:
-        print("secret API key required")
-        sys.exit(1)
+        # It is often useful to run travis / appveyor jobs on a specific
+        # developer account that does not have the secret key configured.
+        # wheelhouse-uploader should not cause such builds to fail, instead
+        # it would just skip the upload.
+        print("WARNING: secret API key missing: skipping package upload")
+        sys.exit(0)
 
     if (not options.upload_pull_request and
         (os.environ.get('APPVEYOR_PULL_REQUEST_NUMBER')
