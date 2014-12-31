@@ -3,6 +3,10 @@
 The 'fetch_artifacts' command download the artifacts from the matching project
 name and version from public HTML repositories to the dist folder.
 
+The 'upload_all' command scans the content of the `dist` folder for any
+previously generated artifacts that match the current project version number
+and upload them all to PyPI at once.
+
 """
 import os
 try:
