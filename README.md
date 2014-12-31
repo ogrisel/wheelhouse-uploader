@@ -1,8 +1,7 @@
 wheelhouse-uploader
 ===================
 
-Script to help maintain wheelhouse folders on cloud storage containers such as
-Amazon S3, Rackspace Cloud Files, Google Storage or Azure Storage.
+Upload/download wheels to/from cloud storage using libcloud. Helps package maintainers build wheels for their packages and upload them to PyPI. 
 
 ## Installation
 
