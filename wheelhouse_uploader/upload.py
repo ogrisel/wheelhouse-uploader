@@ -66,22 +66,7 @@ class Uploader(object):
         except ObjectDoesNotExistError:
             metadata = {}
 
-        filepaths = []
-        local_metadata = {}
-
-        for filename in os.listdir(local_folder):
-            if filename.startswith('.'):
-                continue
-            filepath = os.path.join(local_folder, filename)
-            if os.path.isdir(filepath):
-                continue
-            # TODO: use a threadpool
-            filepaths.append(filepath)
-            content = open(filepath, 'rb').read()
-            local_metadata[filename] = dict(
-                sha256=sha256(content).hexdigest(),
-                size=len(content),
-            )
+        filepaths, local_metadata = self._scan_local_files(local_folder)
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as e:
             # Dispatch the file uploads in threads
@@ -121,6 +106,26 @@ class Uploader(object):
             driver.upload_object_via_stream(iterator=payload,
                                             container=container,
                                             object_name=self.index_filename)
+
+    def _scan_local_files(self, local_folder):
+        """Collect file informations on the folder to upload."""
+        filepaths = []
+        local_metadata = {}
+
+        for filename in os.listdir(local_folder):
+            if filename.startswith('.'):
+                continue
+            filepath = os.path.join(local_folder, filename)
+            if os.path.isdir(filepath):
+                continue
+            # TODO: use a threadpool
+            filepaths.append(filepath)
+            content = open(filepath, 'rb').read()
+            local_metadata[filename] = dict(
+                sha256=sha256(content).hexdigest(),
+                size=len(content),
+            )
+        return filepaths, local_metadata
 
     def upload_file(self, filepath, container_name):
         # drivers are not thread safe, hence we create one per upload task
