@@ -38,7 +38,8 @@ class fetch_artifacts(Command):
         try:
             config.read(SETUP_FILE)
             artifact_indexes = config.get(SECTION, KEY)
-            self.index_urls = artifact_indexes.strip().split()
+            lines = [l.strip() for l in artifact_indexes.strip().split('\n')]
+            self.index_urls = [l for l in lines if l and not l.startswith('#')]
         except (IOError, KeyError, NoOptionError, NoSectionError):
             raise DistutilsOptionError(
                 'Missing url of artifact index configured with key "%s" of '
