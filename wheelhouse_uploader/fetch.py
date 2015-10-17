@@ -174,7 +174,8 @@ def download_artifacts(index_url, folder, project_name, version=None,
             print("Available versions: %s" % ", ".join(sorted(found_versions)))
         return
 
-    print('found %d artifacts to download to %s' % (len(artifacts), folder))
+    print('Found %d artifacts to download from %s'
+          % (len(artifacts), index_url))
     if not os.path.exists(folder):
         os.makedirs(folder)
     with ThreadPoolExecutor(max_workers=max_workers) as e:
