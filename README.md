@@ -97,7 +97,12 @@ python -m wheelhouse_uploader fetch \
     project-name http://wheelhouse.example.org/
 ~~~
 
-### Uploading previously archived artifacts to PyPI
+### Uploading previously archived artifacts to PyPI (deprecated)
+
+**DEPRECATION NOTICE**: while the following still works, you are advised
+to use the alternative tool: [twine](https://pypi.python.org/pypi/twine)
+that makes it easy to script uploads of packages to PyPI without messing
+around with distutils and `setup.py`.
 
 Ensure that the `setup.py` file of the project registers the
 `wheelhouse-uploader` distutils extensions:
