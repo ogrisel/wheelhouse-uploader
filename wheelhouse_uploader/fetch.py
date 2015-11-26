@@ -31,8 +31,8 @@ def parse_filename(project_name, filename):
     ('0.15.2.dev0', '3.4', 'bdist_wheel')
 
     >>> parse_filename('scikit-learn',
-    ...                'scikit_learn-0.15.dev0-cp27-none-win32.whl')
-    ('0.15.dev0', '2.7', 'bdist_wheel')
+    ...                'scikit_learn-0.15.dev0+local3-cp27-none-win32.whl')
+    ('0.15.dev0+local3', '2.7', 'bdist_wheel')
 
     >>> parse_filename('scikit-learn',
     ...               'scikit-learn-0.15.2.win32-py2.7.exe')
