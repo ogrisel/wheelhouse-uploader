@@ -67,7 +67,13 @@ class Uploader(object):
             metadata = {}
 
         filepaths, local_metadata = self._scan_local_files(local_folder)
+        metadata.update(local_metadata)
+        self._upload_files(filepaths, container_name)
+        self._upload_metadata_file(driver, container, metadata)
+        if self.update_index:
+            self._update_index(driver, container, metadata)
 
+    def _upload_files(self, filepaths, container_name):
         with ThreadPoolExecutor(max_workers=self.max_workers) as e:
             # Dispatch the file uploads in threads
             futures = [e.submit(self.upload_file, filepath_, container_name)
@@ -77,35 +83,35 @@ class Uploader(object):
                 # an exception early in case if problem
                 future.result()
 
+    def _upload_metadata_file(self, driver, container, metadata):
         print('Uploading %s' % self.metadata_filename)
-        metadata.update(local_metadata)
         metadata_json_bytes = BytesIO(json.dumps(metadata).encode('utf-8'))
         driver.upload_object_via_stream(iterator=metadata_json_bytes,
                                         container=container,
                                         object_name=self.metadata_filename)
 
-        if self.update_index:
-            # TODO use a mako template instead
-            objects = driver.list_container_objects(container)
-            print('Updating index.html with %d links' % len(objects))
-            payload = StringIO()
-            payload.write(u'<html><body><p>\n')
-            for object_ in objects:
-                if not object_.name.endswith(('.json', '.html')):
-                    object_metadata = metadata.get(object_.name, {})
-                    digest = object_metadata.get('sha256')
-                    if digest is not None:
-                        payload.write(
-                            u'<li><a href="%s#sha256=%s">%s<a></li>\n'
-                            % (object_.name, digest, object_.name))
-                    else:
-                        payload.write(u'<li><a href="%s">%s<a></li>\n'
-                                      % (object_.name, object_.name))
-            payload.write(u'</p></body></html>\n')
-            payload.seek(0)
-            driver.upload_object_via_stream(iterator=payload,
-                                            container=container,
-                                            object_name=self.index_filename)
+    def _update_index(self, driver, container, metadata):
+        # TODO use a mako template instead
+        objects = driver.list_container_objects(container)
+        print('Updating index.html with %d links' % len(objects))
+        payload = StringIO()
+        payload.write(u'<html><body><p>\n')
+        for object_ in objects:
+            if not object_.name.endswith(('.json', '.html')):
+                object_metadata = metadata.get(object_.name, {})
+                digest = object_metadata.get('sha256')
+                if digest is not None:
+                    payload.write(
+                        u'<li><a href="%s#sha256=%s">%s<a></li>\n'
+                        % (object_.name, digest, object_.name))
+                else:
+                    payload.write(u'<li><a href="%s">%s<a></li>\n'
+                                  % (object_.name, object_.name))
+        payload.write(u'</p></body></html>\n')
+        payload.seek(0)
+        driver.upload_object_via_stream(iterator=payload,
+                                        container=container,
+                                        object_name=self.index_filename)
 
     def _scan_local_files(self, local_folder):
         """Collect file informations on the folder to upload."""
