@@ -20,8 +20,8 @@ class Uploader(object):
 
     metadata_filename = 'metadata.json'
 
-    def __init__(self, username, secret, provider_name, region, update_index=True,
-                 max_workers=4):
+    def __init__(self, username, secret, provider_name, region,
+                 update_index=True, max_workers=4):
         self.username = username
         self.secret = secret
         self.provider_name = provider_name
