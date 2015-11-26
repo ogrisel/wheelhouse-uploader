@@ -37,7 +37,7 @@ class Uploader(object):
     def upload(self, local_folder, container, retry_on_error=3):
         """Wrapper to make upload more robust to random server errors"""
         try:
-            self._upload(local_folder, container)
+            self._try_upload_once(local_folder, container)
         except InvalidCredsError:
             raise
         except Exception:
@@ -48,7 +48,7 @@ class Uploader(object):
             self.upload(local_folder, container,
                         retry_on_error=retry_on_error - 1)
 
-    def _upload(self, local_folder, container_name):
+    def _try_upload_once(self, local_folder, container_name):
         # check that the container is reachable
         driver = self.make_driver()
         try:
