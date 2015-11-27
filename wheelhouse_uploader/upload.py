@@ -90,23 +90,31 @@ class Uploader(object):
                                         container=container,
                                         object_name=self.metadata_filename)
 
+    def _get_package_filenames(self, driver, container,
+                               ignore_list=('.json', '.html')):
+        package_filenames = []
+        objects = driver.list_container_objects(container)
+        for object_ in objects:
+            if not object_.name.endswith(ignore_list):
+                package_filenames.append(object_.name)
+        return package_filenames
+
     def _update_index(self, driver, container, metadata):
         # TODO use a mako template instead
-        objects = driver.list_container_objects(container)
-        print('Updating index.html with %d links' % len(objects))
+        package_filenames = self._get_package_filenames(driver, container)
+        print('Updating index.html with %d links' % len(package_filenames))
         payload = StringIO()
         payload.write(u'<html><body><p>\n')
-        for object_ in objects:
-            if not object_.name.endswith(('.json', '.html')):
-                object_metadata = metadata.get(object_.name, {})
-                digest = object_metadata.get('sha256')
-                if digest is not None:
-                    payload.write(
-                        u'<li><a href="%s#sha256=%s">%s<a></li>\n'
-                        % (object_.name, digest, object_.name))
-                else:
-                    payload.write(u'<li><a href="%s">%s<a></li>\n'
-                                  % (object_.name, object_.name))
+        for filename in package_filenames:
+            object_metadata = metadata.get(filename, {})
+            digest = object_metadata.get('sha256')
+            if digest is not None:
+                payload.write(
+                    u'<li><a href="%s#sha256=%s">%s<a></li>\n'
+                    % (filename, digest, filename))
+            else:
+                payload.write(u'<li><a href="%s">%s<a></li>\n'
+                              % (filename, filename))
         payload.write(u'</p></body></html>\n')
         payload.seek(0)
         driver.upload_object_via_stream(iterator=payload,
