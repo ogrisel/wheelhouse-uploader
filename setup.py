@@ -26,6 +26,7 @@ setup(
     setup_requires=['setuptools-markdown'],
     install_requires=[
         "setuptools>=0.9",  # required for PEP 440 version parsing
+        "packaging",
         "futures",
         "apache-libcloud",
     ],

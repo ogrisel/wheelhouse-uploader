@@ -1,5 +1,11 @@
 import sys
+import re
 from pkg_resources import safe_version
+from packaging.version import VERSION_PATTERN
+
+# PEP440 version spec
+_version_regex = re.compile('^' + VERSION_PATTERN + '$',
+                            re.VERBOSE | re.IGNORECASE)
 
 
 def parse_filename(filename, project_name=None):
@@ -98,3 +104,19 @@ def _parse_source_filename(basename, project_name=None):
         raise ValueError('File %s does not match expected project name %s'
                          % (basename, project_name))
     return (distname, safe_version(version), '', 'sdist')
+
+
+def is_dev(version):
+    """Look for dev flag in PEP440 version number
+
+    >>> is_dev('0.15.dev0+local3')
+    True
+    >>> is_dev('0.15.dev+local3')
+    True
+    >>> is_dev('0.15+local3')
+    False
+
+    """
+    # ignore the local segment of PEP400 version strings
+    m = _version_regex.match(version)
+    return m is not None and m.groupdict().get('dev') is not None
