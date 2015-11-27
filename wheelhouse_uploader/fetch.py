@@ -5,103 +5,12 @@ except ImportError:
     from urllib2 import urlopen
 import re
 import os
-import sys
 import shutil
 from pkg_resources import safe_version
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from wheelhouse_uploader.utils import parse_filename
 
 link_pattern = re.compile(r'\bhref="([^"]+)"')
-
-
-def parse_filename(project_name, filename):
-    """Find artifact metadata based on expected project name and filename
-
-    This is necessary to be able to reupload previously generated to PyPI.
-
-    >>> parse_filename('scikit-learn',
-    ...                'scikit_learn-0.15.2-cp34-none-win32.whl')
-    ('0.15.2', '3.4', 'bdist_wheel')
-
-    >>> parse_filename('scikit-learn',
-    ...                'scikit-learn-0.15.1rc.win-amd64-py2.7.exe')
-    ('0.15.1rc0', '2.7', 'bdist_wininst')
-
-    >>> parse_filename('scikit-learn',
-    ...                'scikit_learn-0.15.2.dev-cp34-none-win32.whl')
-    ('0.15.2.dev0', '3.4', 'bdist_wheel')
-
-    >>> parse_filename('scikit-learn',
-    ...                'scikit_learn-0.15.dev0+local3-cp27-none-win32.whl')
-    ('0.15.dev0+local3', '2.7', 'bdist_wheel')
-
-    >>> parse_filename('scikit-learn',
-    ...               'scikit-learn-0.15.2.win32-py2.7.exe')
-    ('0.15.2', '2.7', 'bdist_wininst')
-
-    >>> parse_filename('scikit-learn', 'scikit-learn-0.15.1.tar.gz')
-    ('0.15.1', '', 'sdist')
-
-    >>> parse_filename('scikit-learn', 'scikit-learn-0.15.1.zip')
-    ('0.15.1', '', 'sdist')
-
-    >>> parse_filename('scikit-learn',
-    ...     'scikit_learn-0.15.1-cp34-cp34m-macosx_10_6_intel'
-    ...     '.macosx_10_9_intel.macosx_10_9_x86_64.whl')
-    ('0.15.1', '3.4', 'bdist_wheel')
-
-    """
-    if filename.endswith('.whl'):
-        return _parse_wheel_filename(project_name, filename[:-len('.whl')])
-    elif filename.endswith('.exe'):
-        return _parse_exe_filename(project_name, filename[:-len('.exe')])
-    elif filename.endswith('.zip'):
-        return _parse_source_filename(project_name, filename[:-len('.zip')])
-    elif filename.endswith('.tar.gz'):
-        return _parse_source_filename(project_name, filename[:-len('.tar.gz')])
-    else:
-        raise ValueError('Invalid filename "%s", unrecognized extension'
-                         % filename)
-
-
-def _parse_wheel_filename(project_name, basename):
-    components = basename.split('-')
-    if not components[0] == project_name.replace('-', '_'):
-        raise ValueError('File %s.whl does not match project name %s'
-                         % (basename, project_name))
-
-    if len(components) < 3 or not len(components[2]) >= 4:
-        raise ValueError('Invalid wheel filename %s.whl' % basename)
-    version = components[1]
-    pytag = components[2]
-
-    if pytag == 'py2.py3':
-        # special handling of the universal Python version tag:
-        pyversion = '.'.join(str(x) for x in sys.version_info[:2])
-    elif pytag[:2] == 'cp':
-        pyversion = '%s.%s' % (pytag[2], pytag[3])
-    else:
-        raise ValueError('Invalid Python version tag in filename %s.whl'
-                         % basename)
-    return (safe_version(version), pyversion, 'bdist_wheel')
-
-
-def _parse_exe_filename(project_name, basename):
-    if not basename.startswith(project_name):
-        raise ValueError('File %s.exe does not match project name %s'
-                         % (basename, project_name))
-    metadata_block = basename[len(project_name) + 1:]
-    metadata_block, pyversion = metadata_block.rsplit('-', 1)
-    pyversion = pyversion[2:]
-    version, platform = metadata_block.rsplit('.', 1)
-    return (safe_version(version), pyversion, 'bdist_wininst')
-
-
-def _parse_source_filename(project_name, basename):
-    if not basename.startswith(project_name):
-        raise ValueError('File %s.tar.gz does not match project name %s'
-                         % (basename, project_name))
-    version = basename[len(project_name) + 1:]
-    return (safe_version(version), '', 'sdist')
 
 
 def download(url, filepath, buffer_size=int(1e6), overwrite=False):
@@ -147,7 +56,8 @@ def _parse_html(index_url, folder, project_name, version=None):
         else:
             filename = link
         try:
-            file_version, _, _ = parse_filename(project_name, filename)
+            _, file_version, _, _ = parse_filename(filename,
+                                                   project_name=project_name)
         except ValueError:
             # not a supported artifact
             continue

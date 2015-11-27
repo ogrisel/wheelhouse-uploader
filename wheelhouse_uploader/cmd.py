@@ -18,7 +18,7 @@ from distutils.command.upload import upload
 from distutils.errors import DistutilsOptionError
 from pkg_resources import safe_version
 
-from wheelhouse_uploader.fetch import parse_filename
+from wheelhouse_uploader.utils import parse_filename
 from wheelhouse_uploader.fetch import download_artifacts
 
 __all__ = ['fetch_artifacts', 'upload_all']
@@ -68,8 +68,8 @@ class upload_all(upload):
         dist_files = []
         for filename in os.listdir('dist'):
             try:
-                file_version, pyversion, command = parse_filename(
-                    project_name, filename)
+                _, file_version, pyversion, command = parse_filename(
+                    filename, project_name=project_name)
                 if file_version != version:
                     continue
             except ValueError:
