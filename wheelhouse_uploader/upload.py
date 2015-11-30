@@ -5,6 +5,7 @@ from hashlib import sha256
 from time import sleep
 from io import StringIO
 from io import BytesIO
+from traceback import print_exc
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from libcloud.common.types import InvalidCredsError
@@ -12,6 +13,8 @@ from libcloud.storage.providers import get_driver
 from libcloud.storage.types import Provider
 from libcloud.storage.types import ContainerDoesNotExistError
 from libcloud.storage.types import ObjectDoesNotExistError
+
+from wheelhouse_uploader.utils import matching_dev_filenames
 
 
 class Uploader(object):
@@ -21,13 +24,15 @@ class Uploader(object):
     metadata_filename = 'metadata.json'
 
     def __init__(self, username, secret, provider_name, region,
-                 update_index=True, max_workers=4):
+                 update_index=True, max_workers=4,
+                 delete_previous_dev_packages=True):
         self.username = username
         self.secret = secret
         self.provider_name = provider_name
         self.region = region
         self.max_workers = max_workers
         self.update_index = update_index
+        self.delete_previous_dev_packages = delete_previous_dev_packages
 
     def make_driver(self):
         provider = getattr(Provider, self.provider_name)
@@ -37,13 +42,15 @@ class Uploader(object):
     def upload(self, local_folder, container, retry_on_error=3):
         """Wrapper to make upload more robust to random server errors"""
         try:
-            self._try_upload_once(local_folder, container)
+            return self._try_upload_once(local_folder, container)
         except InvalidCredsError:
             raise
-        except Exception:
+        except Exception as e:
             if retry_on_error <= 0:
                 raise
             # can be caused by any network or server side failure
+            print(e)
+            print_exc()
             sleep(1)
             self.upload(local_folder, container,
                         retry_on_error=retry_on_error - 1)
@@ -74,6 +81,7 @@ class Uploader(object):
             self._update_index(driver, container, metadata)
 
     def _upload_files(self, filepaths, container_name):
+        print("About to upload %d files" % len(filepaths))
         with ThreadPoolExecutor(max_workers=self.max_workers) as e:
             # Dispatch the file uploads in threads
             futures = [e.submit(self.upload_file, filepath_, container_name)
@@ -126,7 +134,7 @@ class Uploader(object):
         filepaths = []
         local_metadata = {}
 
-        for filename in os.listdir(local_folder):
+        for filename in sorted(os.listdir(local_folder)):
             if filename.startswith('.'):
                 continue
             filepath = os.path.join(local_folder, filename)
@@ -147,12 +155,26 @@ class Uploader(object):
         driver = self.make_driver()
         filename = os.path.basename(filepath)
         container = driver.get_container(container_name)
+
+        if self.delete_previous_dev_packages:
+            existing_filenames = self._get_package_filenames(driver, container)
+            previous_dev_filenames = matching_dev_filenames(filename,
+                                                            existing_filenames)
+
         size_mb = os.stat(filepath).st_size / 1e6
         print("Uploading %s [%0.3f MB]" % (filepath, size_mb))
         with open(filepath, 'rb') as byte_stream:
             driver.upload_object_via_stream(iterator=byte_stream,
                                             container=container,
                                             object_name=filename)
+        if self.delete_previous_dev_packages and previous_dev_filenames:
+            for filename in previous_dev_filenames:
+                print("Deleting previous dev package %s" % filename)
+                try:
+                    obj = container.get_object(filename)
+                    driver.delete_object(obj)
+                except ObjectDoesNotExistError:
+                    pass
 
     def get_container_cdn_url(self, container_name):
         driver = self.make_driver()
