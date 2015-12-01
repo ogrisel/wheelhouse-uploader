@@ -142,7 +142,8 @@ class Uploader(object):
                 continue
             # TODO: use a threadpool
             filepaths.append(filepath)
-            content = open(filepath, 'rb').read()
+            with open(filepath, 'rb') as f:
+                content = f.read()
             local_metadata[filename] = dict(
                 sha256=sha256(content).hexdigest(),
                 size=len(content),
