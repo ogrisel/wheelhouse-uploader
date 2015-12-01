@@ -1,6 +1,7 @@
 import sys
 import re
-from pkg_resources import safe_version
+from datetime import datetime
+from pkg_resources import safe_version, parse_version
 from packaging.version import VERSION_PATTERN
 
 # PEP440 version spec
@@ -228,3 +229,40 @@ def matching_dev_filenames(new_filename, existing_filenames):
         if reference_key == candidate_key:
             matching.append(filename)
     return matching
+
+
+def local_stamp(version):
+    """Prefix the local segment with a UTC timestamp
+
+    The goal is to make sure that the lexical order of the dev versions
+    is matching the CI build ordering.
+
+    >>> 'deadbeef' < 'cafebabe'
+    False
+
+    >>> v1 = local_stamp('0.1.dev0+deadbeef')
+    >>> v1                                                # doctest: +ELLIPSIS
+    '0.1.dev0+..._deadbeef'
+
+    >>> import time
+    >>> time.sleep(1)  # local_stamp has a second-level resolution
+    >>> v2 = local_stamp('0.1.dev0+cafebabe')
+    >>> v2                                                # doctest: +ELLIPSIS
+    '0.1.dev0+..._cafebabe'
+    >>> parse_version(v1) < parse_version(v2)
+    True
+
+    This also works even if the original version does not have a local
+    segment:
+
+    >>> v3 = local_stamp('0.1.dev0')
+    >>> parse_version(v1) < parse_version(v3)
+    True
+
+    """
+    v = parse_version(version)
+    timestamp = datetime.utcnow().strftime("%y%m%d%H%M%S")
+    if v.local is not None:
+        return "%s+%s_%s" % (v.public, timestamp, v.local)
+    else:
+        return "%s+%s" % (v.public, timestamp)
