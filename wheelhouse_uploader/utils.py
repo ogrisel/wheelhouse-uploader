@@ -8,6 +8,8 @@ from packaging.version import VERSION_PATTERN
 _version_regex = re.compile('^' + VERSION_PATTERN + '$',
                             re.VERBOSE | re.IGNORECASE)
 
+_stamp_regex = re.compile(r'(\d{14})(_\w+)?')
+
 
 def _wheel_escape(component):
     return re.sub("[^\w\d.]+", "_", component, re.UNICODE)
@@ -229,6 +231,25 @@ def matching_dev_filenames(new_filename, existing_filenames):
         if reference_key == candidate_key:
             matching.append(filename)
     return matching
+
+
+def has_stamp(version):
+    """Check that the local segment looks like a timestamp
+
+    >>> has_stamp('0.1.dev0+20151214030042')
+    True
+    >>> has_stamp('0.1.dev0+20151214030042_deadbeef')
+    True
+    >>> has_stamp('0.1.dev0+deadbeef')
+    False
+    >>> has_stamp('0.1.dev0')
+    False
+
+    """
+    v = parse_version(version)
+    if v.local is None:
+        return False
+    return _stamp_regex.match(v.local) is not None
 
 
 def local_stamp(version):
