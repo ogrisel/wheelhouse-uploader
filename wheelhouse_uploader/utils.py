@@ -173,22 +173,30 @@ def is_dev(version):
     return m is not None and m.groupdict().get('dev') is not None
 
 
-def matching_dev_filenames(new_filename, existing_filenames):
+def matching_dev_filenames(reference_filename, existing_filenames):
     """Filter filenames for matching dev packages.
 
     Return filenames for dev packages with matching package names, package
     type, python version and platform information.
 
-    >>> matching_dev_filenames("package-1.0.dev+local1-cp34-none-win32.whl", [
-    ...     "package-1.0.dev+local1-cp34-none-win32.whl",
-    ...     "package-0.9-cp34-none-win32.whl",
-    ...     "package-1.0.dev+local1-cp34-none-win_amd64.whl",
-    ...     "other_package-1.0.dev+local0-cp34-none-win32.whl",
-    ...     "package-1.0.dev1+local0-cp34-none-win32.whl",
-    ...     "package-1.0.dev+local0-cp33-none-win32.whl",
-    ...     "package-1.0.dev+local1-cp34-none-win32.whl",
-    ... ])
-    ['package-1.0.dev1+local0-cp34-none-win32.whl']
+    Sort them by version number (higer versions first).
+
+    >>> matching_dev_filenames(
+    ...     "package-1.0.dev0+001_local1-cp34-none-win32.whl",
+    ...     [
+    ...         "package-1.0.dev0+000_local1-cp34-none-win32.whl",
+    ...         "package-1.1.dev+local1-cp34-none-win32.whl",
+    ...         "package-1.0.dev0+001_local1-cp34-none-win32.whl",
+    ...         "package-0.9-cp34-none-win32.whl",
+    ...         "package-1.0.dev+local1-cp34-none-win_amd64.whl",
+    ...         "other_package-1.0.dev+local0-cp34-none-win32.whl",
+    ...         "package-1.0.dev+local0-cp33-none-win32.whl",
+    ...         "package-1.0.dev+local1-cp34-none-win32.whl",
+    ...     ])                                # doctest: +NORMALIZE_WHITESPACE
+    ['package-1.1.dev+local1-cp34-none-win32.whl',
+     'package-1.0.dev0+001_local1-cp34-none-win32.whl',
+     'package-1.0.dev0+000_local1-cp34-none-win32.whl',
+     'package-1.0.dev+local1-cp34-none-win32.whl']
 
     If the reference filename is not a dev version, an empty list is returned.
 
@@ -198,15 +206,16 @@ def matching_dev_filenames(new_filename, existing_filenames):
     ... ])
     []
 
-    >>> matching_dev_filenames("package-1.0.weirdname", [
+    >>> matching_dev_filenames("package-1.0.invalid", [
     ...     "package-1.0.dev+local1-cp34-none-win32.whl",
     ...     "package-0.9+local1-cp34-none-win32.whl",
     ... ])
     []
+
     """
     try:
         distname, version, _,  disttype, tags = parse_filename(
-            new_filename, return_tags=True)
+            reference_filename, return_tags=True)
     except ValueError:
         # Invalid filemame: no dev match
         return []
@@ -217,8 +226,6 @@ def matching_dev_filenames(new_filename, existing_filenames):
     reference_key = (distname, disttype, tags)
     matching = []
     for filename in existing_filenames:
-        if filename == new_filename:
-            continue
         try:
             distname, version, _,  disttype, tags = parse_filename(
                 filename, return_tags=True)
@@ -229,8 +236,9 @@ def matching_dev_filenames(new_filename, existing_filenames):
             continue
         candidate_key = (distname, disttype, tags)
         if reference_key == candidate_key:
-            matching.append(filename)
-    return matching
+            matching.append((version, filename))
+    matching.sort(key=lambda x: parse_version(x[0]), reverse=True)
+    return [filename for _, filename in matching]
 
 
 def has_stamp(version):
@@ -295,8 +303,6 @@ def stamp_dev_wheel(filename):
     >>> stamp_dev_wheel('proj-0.1.dev0-py2.py3-none-any.whl')
     ...                                                   # doctest: +ELLIPSIS
     (True, 'proj-0.1.dev0+...-py2.py3-none-any.whl')
-    >>> has_stamp(stamp_dev_wheel('proj-0.1.dev0-py2.py3-none-any.whl')[1])
-    True
 
     Do no stamp release packages, only dev packages:
 

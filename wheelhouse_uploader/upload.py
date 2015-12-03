@@ -184,17 +184,19 @@ class Uploader(object):
         filename = os.path.basename(filepath)
         container = driver.get_container(container_name)
 
-        if self.delete_previous_dev_packages:
-            existing_filenames = self._get_package_filenames(driver, container)
-            previous_dev_filenames = matching_dev_filenames(filename,
-                                                            existing_filenames)
-
         size_mb = os.stat(filepath).st_size / 1e6
         print("Uploading %s [%0.3f MB]" % (filepath, size_mb))
         with open(filepath, 'rb') as byte_stream:
             driver.upload_object_via_stream(iterator=byte_stream,
                                             container=container,
                                             object_name=filename)
+
+        if self.delete_previous_dev_packages:
+            existing_filenames = self._get_package_filenames(driver, container)
+            previous_dev_filenames = matching_dev_filenames(filename,
+                                                            existing_filenames)
+
+
         if self.delete_previous_dev_packages and previous_dev_filenames:
             for filename in previous_dev_filenames:
                 print("Deleting previous dev package %s" % filename)
