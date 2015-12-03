@@ -196,10 +196,9 @@ class Uploader(object):
             previous_dev_filenames = matching_dev_filenames(filename,
                                                             existing_filenames)
 
-
-        if self.delete_previous_dev_packages and previous_dev_filenames:
-            for filename in previous_dev_filenames:
-                print("Deleting previous dev package %s" % filename)
+            # Only keep the last 5 dev builds
+            for filename in previous_dev_filenames[5:]:
+                print("Deleting old dev package %s" % filename)
                 try:
                     obj = container.get_object(filename)
                     driver.delete_object(obj)
