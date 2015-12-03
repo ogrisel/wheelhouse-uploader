@@ -162,6 +162,8 @@ class Uploader(object):
                 should_rename, new_filename = stamp_dev_wheel(filename)
                 new_filepath = os.path.join(local_folder, new_filename)
                 if should_rename:
+                    print("Renaming dev wheel to add an upload timestamp: %s"
+                          % new_filename)
                     os.rename(filepath, new_filepath)
                     filepath, filename = new_filepath, new_filename
             except ValueError as e:
