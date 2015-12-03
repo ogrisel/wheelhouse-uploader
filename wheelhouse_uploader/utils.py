@@ -282,8 +282,52 @@ def local_stamp(version):
 
     """
     v = parse_version(version)
-    timestamp = datetime.utcnow().strftime("%y%m%d%H%M%S")
+    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
     if v.local is not None:
         return "%s+%s_%s" % (v.public, timestamp, v.local)
     else:
         return "%s+%s" % (v.public, timestamp)
+
+
+def stamp_dev_wheel(filename):
+    """Rename a filename to add a timestamp only if this is a dev package
+
+    >>> stamp_dev_wheel('proj-0.1.dev0-py2.py3-none-any.whl')
+    ...                                                   # doctest: +ELLIPSIS
+    (True, 'proj-0.1.dev0+...-py2.py3-none-any.whl')
+    >>> has_stamp(stamp_dev_wheel('proj-0.1.dev0-py2.py3-none-any.whl')[1])
+    True
+
+    Do no stamp release packages, only dev packages:
+
+    >>> stamp_dev_wheel('proj-0.1-py2.py3-none-any.whl')
+    (False, 'proj-0.1-py2.py3-none-any.whl')
+
+    Do not restamp a package that has already been stamped:
+
+    >>> stamp_dev_wheel('proj-0.1.dev0+20151214030042-py2.py3-none-any.whl')
+    (False, 'proj-0.1.dev0+20151214030042-py2.py3-none-any.whl')
+
+    Non-dev non-wheel files should be left unaffected:
+
+    >>> stamp_dev_wheel('scikit-learn-0.15.1rc.win-amd64-py2.7.exe')
+    (False, 'scikit-learn-0.15.1rc.win-amd64-py2.7.exe')
+
+    """
+    distname, version, _, disttype, tags = parse_filename(
+        filename, return_tags=True)
+    if not is_dev(version):
+        # Do no stamp release packages, only dev packages
+        return False, filename
+
+    if disttype != 'bdist_wheel':
+        raise ValueError("%s only dev wheel file can be stamped for upload"
+                         % filename)
+
+    if has_stamp(version):
+        # Package has already been stamped, do nothing
+        return False, filename
+    else:
+        version = local_stamp(version)
+    return True, "%s-%s-%s-%s-%s.whl" % (distname, version, tags['python'],
+                                         tags['abi'], tags['platform'])

@@ -14,7 +14,7 @@ from libcloud.storage.types import Provider
 from libcloud.storage.types import ContainerDoesNotExistError
 from libcloud.storage.types import ObjectDoesNotExistError
 
-from wheelhouse_uploader.utils import matching_dev_filenames
+from wheelhouse_uploader.utils import matching_dev_filenames, stamp_dev_wheel
 
 
 class Uploader(object):
@@ -130,7 +130,12 @@ class Uploader(object):
                                         object_name=self.index_filename)
 
     def _scan_local_files(self, local_folder):
-        """Collect file informations on the folder to upload."""
+        """Collect file informations on the folder to upload.
+
+        Dev wheel files will automatically get renamed to add an upload time
+        stamp in the process.
+
+        """
         filepaths = []
         local_metadata = {}
 
@@ -139,6 +144,16 @@ class Uploader(object):
                 continue
             filepath = os.path.join(local_folder, filename)
             if os.path.isdir(filepath):
+                continue
+
+            try:
+                should_rename, new_filename = stamp_dev_wheel(filename)
+                new_filepath = os.path.join(local_folder, new_filename)
+                if should_rename:
+                    os.rename(filepath, new_filepath)
+                    filepath, filename = new_filepath, new_filename
+            except ValueError as e:
+                print("Skipping %s: %s" % (filename, e))
                 continue
             # TODO: use a threadpool
             filepaths.append(filepath)
