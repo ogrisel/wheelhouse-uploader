@@ -63,20 +63,13 @@ class Uploader(object):
         except ContainerDoesNotExistError:
             container = driver.create_container(container_name)
 
-        try:
-            metadata_obj = container.get_object(self.metadata_filename)
-            content = StringIO()
-            for bytes_ in metadata_obj.as_stream():
-                content.write(bytes_.decode('utf-8'))
-            content.seek(0)
-            metadata = json.load(content)
-        except ObjectDoesNotExistError:
-            metadata = {}
-
         filepaths, local_metadata = self._scan_local_files(local_folder)
-        metadata.update(local_metadata)
+
         self._upload_files(filepaths, container_name)
-        self._upload_metadata_file(driver, container, metadata)
+
+        # Refresh metadata
+        metadata = self._update_metadata_file(driver, container,
+                                              local_metadata)
         if self.update_index:
             self._update_index(driver, container, metadata)
 
@@ -91,12 +84,31 @@ class Uploader(object):
                 # an exception early in case if problem
                 future.result()
 
-    def _upload_metadata_file(self, driver, container, metadata):
+    def _update_metadata_file(self, driver, container, local_metadata):
+        try:
+            metadata_obj = container.get_object(self.metadata_filename)
+            content = StringIO()
+            for bytes_ in metadata_obj.as_stream():
+                content.write(bytes_.decode('utf-8'))
+            content.seek(0)
+            metadata = json.load(content)
+        except ObjectDoesNotExistError:
+            metadata = {}
+        metadata.update(local_metadata)
+
+        # Garbage collect metadata for deleted files
+        filenames = set(self._get_package_filenames(driver, container))
+        keys = list(sorted(metadata.keys()))
+        for key in keys:
+            if key not in filenames:
+                del metadata[key]
+
         print('Uploading %s' % self.metadata_filename)
         metadata_json_bytes = BytesIO(json.dumps(metadata).encode('utf-8'))
         driver.upload_object_via_stream(iterator=metadata_json_bytes,
                                         container=container,
                                         object_name=self.metadata_filename)
+        return metadata
 
     def _get_package_filenames(self, driver, container,
                                ignore_list=('.json', '.html')):
