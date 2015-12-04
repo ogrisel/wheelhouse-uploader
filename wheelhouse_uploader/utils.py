@@ -214,7 +214,7 @@ def matching_dev_filenames(reference_filename, existing_filenames):
 
     """
     try:
-        distname, version, _,  disttype, tags = parse_filename(
+        distname, version, _, disttype, tags = parse_filename(
             reference_filename, return_tags=True)
     except ValueError:
         # Invalid filemame: no dev match
@@ -227,7 +227,7 @@ def matching_dev_filenames(reference_filename, existing_filenames):
     matching = []
     for filename in existing_filenames:
         try:
-            distname, version, _,  disttype, tags = parse_filename(
+            distname, version, _, disttype, tags = parse_filename(
                 filename, return_tags=True)
         except ValueError:
             # Invalid filemame: no dev match
