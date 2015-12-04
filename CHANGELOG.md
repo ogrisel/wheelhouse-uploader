@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.9.1 - 2015-12-03
+
+  - More informative error message in case of invalid credentials.
+
 ## 0.9.0 - 2015-12-03
 
   - Add a time stamp to the local version segment of uploaded dev

@@ -60,16 +60,16 @@ def parse_args():
     return parser.parse_args()
 
 
-def handle_upload(options):
+def check_upload_credentions(options):
     if not options.username:
         options.username = os.environ.get('WHEELHOUSE_UPLOADER_USERNAME')
+    if not options.username:
+        print("Username required: pass the --username option or set the "
+              "WHEELHOUSE_UPLOADER_USERNAME environment variable")
+        sys.exit(1)
 
     if not options.secret:
         options.secret = os.environ.get('WHEELHOUSE_UPLOADER_SECRET')
-
-    if not options.username:
-        print("Username required")
-        sys.exit(1)
 
     if not options.secret:
         # It is often useful to run travis / appveyor jobs on a specific
@@ -78,6 +78,10 @@ def handle_upload(options):
         # it would just skip the upload.
         print("WARNING: secret API key missing: skipping package upload")
         sys.exit(0)
+
+
+def handle_upload(options):
+    check_upload_credentions(options)
 
     if (not options.upload_pull_request and
         (os.environ.get('APPVEYOR_PULL_REQUEST_NUMBER')
@@ -109,7 +113,7 @@ def handle_upload(options):
             except Exception as e:
                 print("Failed to enable CDN: %s %s" % (type(e).__name__, e))
     except InvalidCredsError:
-        print("Invalid credentials")
+        print("Invalid credentials for user '%s'" % options.username)
         sys.exit(1)
 
 
