@@ -66,12 +66,15 @@ class Uploader(object):
         filepaths, local_metadata = self._scan_local_files(local_folder)
 
         self._upload_files(filepaths, container_name)
+        recently_uploaded = [os.path.basename(path) for path in filepaths]
 
         # Refresh metadata
-        metadata = self._update_metadata_file(driver, container,
-                                              local_metadata)
+        metadata = self._update_metadata_file(
+            driver, container, local_metadata,
+            recently_uploaded=recently_uploaded)
         if self.update_index:
-            self._update_index(driver, container, metadata)
+            self._update_index(driver, container, metadata,
+                               recently_uploaded=recently_uploaded)
 
     def _upload_files(self, filepaths, container_name):
         print("About to upload %d files" % len(filepaths))
@@ -84,7 +87,8 @@ class Uploader(object):
                 # an exception early in case if problem
                 future.result()
 
-    def _update_metadata_file(self, driver, container, local_metadata):
+    def _update_metadata_file(self, driver, container, local_metadata,
+                              recently_uploaded=()):
         try:
             metadata_obj = container.get_object(self.metadata_filename)
             content = StringIO()
@@ -98,12 +102,19 @@ class Uploader(object):
 
         # Garbage collect metadata for deleted files
         filenames = set(self._get_package_filenames(driver, container))
+
+        # Make sure that the recently uploaded files are included: the
+        # eventual consistency semantics of the container listing might hidden
+        # them temporarily.
+        filenames.union(recently_uploaded)
+
         keys = list(sorted(metadata.keys()))
         for key in keys:
             if key not in filenames:
                 del metadata[key]
 
-        print('Uploading %s' % self.metadata_filename)
+        print('Uploading %s with %d entries'
+              % (self.metadata_filename, len(metadata)))
         metadata_json_bytes = BytesIO(json.dumps(metadata).encode('utf-8'))
         driver.upload_object_via_stream(iterator=metadata_json_bytes,
                                         container=container,
@@ -119,9 +130,16 @@ class Uploader(object):
                 package_filenames.append(object_.name)
         return package_filenames
 
-    def _update_index(self, driver, container, metadata):
+    def _update_index(self, driver, container, metadata, recently_uploaded=()):
         # TODO use a mako template instead
         package_filenames = self._get_package_filenames(driver, container)
+
+        # Make sure that the recently uploaded files are included: the
+        # eventual consistency semantics of the container listing might hidden
+        # them temporarily.
+        package_filenames = set(package_filenames).union(recently_uploaded)
+        package_filenames = sorted(package_filenames)
+
         print('Updating index.html with %d links' % len(package_filenames))
         payload = StringIO()
         payload.write(u'<html><body><p>\n')
@@ -195,6 +213,10 @@ class Uploader(object):
 
         if self.delete_previous_dev_packages:
             existing_filenames = self._get_package_filenames(driver, container)
+            if filename not in existing_filenames:
+                # Eventual consistency listing might cause the just uploaded
+                # file not be missing. Ensure this is never the case.
+                existing_filenames.append(filename)
             previous_dev_filenames = matching_dev_filenames(filename,
                                                             existing_filenames)
 
