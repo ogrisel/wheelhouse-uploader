@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 0.9.2 - 2015-12-29
+
+  - Fix index.html update issue: it would not display recently
+    uploaded wheels due to the eventually consistent behavior of
+    container listing.
+    https://github.com/ogrisel/wheelhouse-uploader/issues/15
+
 ## 0.9.1 - 2015-12-03
 
   - More informative error message in case of invalid credentials.
