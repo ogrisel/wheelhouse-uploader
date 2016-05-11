@@ -68,6 +68,18 @@ def parse_filename(filename, project_name=None, return_tags=False):
     ...     '.macosx_10_9_intel.macosx_10_9_x86_64.whl')
     ('scikit_learn', '0.15.1', '3.4', 'bdist_wheel')
 
+    >>> parse_filename('sklearn_template-0.0.3-py2-none-any.whl')
+    ('sklearn_template', '0.0.3', '2', 'bdist_wheel')
+
+    >>> parse_filename('sklearn_template-0.0.3-py3-none-any.whl')
+    ('sklearn_template', '0.0.3', '3', 'bdist_wheel')
+
+    >>> parse_filename('sklearn-template-0.0.3.win32.exe') # doctest: +ELLIPSIS
+    ('sklearn_template', '0.0.3', ..., 'bdist_wininst')
+
+    >>> parse_filename('sklearn-template-0.0.3.win-amd64.exe')
+    ... # doctest: +ELLIPSIS
+    ('sklearn_template', '0.0.3', ..., 'bdist_wininst')
     """
     if filename.endswith('.whl'):
         return _parse_wheel_filename(filename[:-len('.whl')],
@@ -98,7 +110,7 @@ def _parse_wheel_filename(basename, project_name=None, return_tags=False):
         raise ValueError('File %s.whl does not match project name %s'
                          % (basename, project_name))
 
-    if len(components) < 3 or not len(components[2]) >= 4:
+    if len(components) < 3 or not len(components[2]) >= 3:
         raise ValueError('Invalid wheel filename %s.whl' % basename)
     version = components[1]
     pytag = components[2]
@@ -108,6 +120,8 @@ def _parse_wheel_filename(basename, project_name=None, return_tags=False):
     if pytag == 'py2.py3':
         # special handling of the universal Python version tag:
         pyversion = '.'.join(str(x) for x in sys.version_info[:2])
+    elif pytag[:2] == 'py' and len(pytag) == 3:
+        pyversion = '%s' % pytag[2]
     elif pytag[:2] == 'py' and len(pytag) == 4:
         pyversion = '%s.%s' % (pytag[2], pytag[3])
     elif pytag[:2] == 'cp':
@@ -129,6 +143,11 @@ def _parse_wheel_filename(basename, project_name=None, return_tags=False):
 
 def _parse_exe_filename(basename, project_name=None, return_tags=True):
     remainder, pythontag = basename.rsplit('-', 1)
+    if not pythontag.startswith('py'):
+        # There was no python tag with this file, therefore it must be
+        # python version independent
+        pythontag = 'py' + '.'.join(str(x) for x in sys.version_info[:2])
+        remainder = basename
     name_and_version, platform = remainder.rsplit('.', 1)
     distname, version = name_and_version.rsplit('-', 1)
     distname = _wheel_escape(distname)
