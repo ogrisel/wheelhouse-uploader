@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.9.3 - 2016-06-12
+
+  - Fix support for universal wheel filenames.
+    https://github.com/ogrisel/wheelhouse-uploader/issues/16
+
 ## 0.9.2 - 2015-12-29
 
   - Fix index.html update issue: it would not display recently
