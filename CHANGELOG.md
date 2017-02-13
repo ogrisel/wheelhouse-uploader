@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.9.4 - 2017-02-13
+
+  - Fix bad link markup in HTML index by Joe Rickerby
+    https://github.com/ogrisel/wheelhouse-uploader/issues/19
+
 ## 0.9.3 - 2016-06-12
 
   - Fix support for universal wheel filenames.
