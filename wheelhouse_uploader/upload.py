@@ -148,10 +148,10 @@ class Uploader(object):
             digest = object_metadata.get('sha256')
             if digest is not None:
                 payload.write(
-                    u'<li><a href="%s#sha256=%s">%s<a></li>\n'
+                    u'<li><a href="%s#sha256=%s">%s</a></li>\n'
                     % (filename, digest, filename))
             else:
-                payload.write(u'<li><a href="%s">%s<a></li>\n'
+                payload.write(u'<li><a href="%s">%s</a></li>\n'
                               % (filename, filename))
         payload.write(u'</p></body></html>\n')
         payload.seek(0)
