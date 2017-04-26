@@ -14,7 +14,7 @@ except ImportError:
 
 setup(
     name="wheelhouse-uploader",
-    version="0.9.4",
+    version="0.9.5",
     description="Upload wheels to any cloud storage supported by Libcloud",
     maintainer="Olivier Grisel",
     maintainer_email="olivier.grisel@ensta.org",
@@ -28,7 +28,7 @@ setup(
         "setuptools>=0.9",  # required for PEP 440 version parsing
         "packaging",
         "futures",
-        "apache-libcloud",
+        "apache-libcloud==1.1.0",
     ],
     long_description_markdown_filename='README.md',
     classifiers=[
@@ -44,7 +44,9 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
+	'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
     cmdclass=cmdclass,
 )

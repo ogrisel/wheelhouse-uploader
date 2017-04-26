@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.9.5 - 2017-05-26
+
+  - Pin dependency apache-libcloud==1.1.0 to workaround
+    regression introduced by version 2.0.0:
+    https://github.com/ogrisel/wheelhouse-uploader/issues/22
+
 ## 0.9.4 - 2017-02-13
 
   - Fix bad link markup in HTML index by Joe Rickerby
