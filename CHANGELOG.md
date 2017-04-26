@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.9.5 - 2017-05-26
+## 0.9.5 - 2017-04-26
 
   - Pin dependency apache-libcloud==1.1.0 to workaround
     regression introduced by version 2.0.0:
