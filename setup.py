@@ -27,7 +27,7 @@ setup(
     install_requires=[
         "setuptools>=0.9",  # required for PEP 440 version parsing
         "packaging",
-        "futures",
+        'futures; python_version == "2.7"',
         "apache-libcloud==1.1.0",
     ],
     long_description_markdown_filename='README.md',
