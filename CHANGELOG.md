@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.9.7
+
+  - Add explicit dependency on certifi to resolve SSL
+    verification issues on appveyor.
+    https://github.com/ogrisel/wheelhouse-uploader/issues/26
+
 ## 0.9.5 - 2017-04-26
 
   - Pin dependency apache-libcloud==1.1.0 to workaround
