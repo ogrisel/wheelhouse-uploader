@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.9.7
+## 0.9.7 - 2018-07-02
 
   - Add explicit dependency on certifi to resolve SSL
     verification issues on appveyor.
