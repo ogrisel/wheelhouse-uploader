@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.10.0
+## 0.10.0 - 2018-07-03
 
   - Upgrade dependency to latest apache-libcloud
   - Use temporary files for upload and downloads to workaround
