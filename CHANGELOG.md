@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.10.1 - 2018-07-03
+
+  - Pinning apache-liblcoud==2.2.1 dependency to workaround
+    2.3.0 installation problems under Windows.
+
 ## 0.10.0 - 2018-07-03
 
   - Upgrade dependency to latest apache-libcloud
