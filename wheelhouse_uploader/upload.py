@@ -4,8 +4,9 @@ import json
 from hashlib import sha256
 from time import sleep
 from io import StringIO
-from io import BytesIO
 from traceback import print_exc
+import tempfile
+import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from libcloud.common.types import InvalidCredsError
@@ -87,17 +88,46 @@ class Uploader(object):
                 # an exception early in case if problem
                 future.result()
 
+    def _upload_bytes(self, payload, container, object_name):
+        tempdir = tempfile.mkdtemp()
+        tempfilepath = os.path.join(
+            tempdir, '_tmp_wheelhouse_uploader_upload_' + object_name)
+        try:
+            with open(tempfilepath, 'wb') as f:
+                f.write(payload)
+            container.upload_object(file_path=tempfilepath,
+                                    object_name=object_name)
+        finally:
+            try:
+                shutil.rmtree(tempdir)
+            except OSError:
+                # Ignore permission errors on temporary directories
+                print("WARNING: faile to delete", tempdir)
+
+    def _download_bytes(self, container, object_name, missing=None):
+        tempdir = tempfile.mkdtemp()
+        tempfilepath = os.path.join(
+            tempdir, '_tmp_wheelhouse_uploader_download_' + object_name)
+        try:
+            container.get_object(object_name).download(tempfilepath)
+            with open(tempfilepath, 'rb') as f:
+                return f.read()
+        except ObjectDoesNotExistError:
+            return missing
+        finally:
+            try:
+                shutil.rmtree(tempdir)
+            except OSError:
+                # Ignore permission errors on temporary directories
+                print("WARNING: faile to delete", tempdir)
+
     def _update_metadata_file(self, driver, container, local_metadata,
                               recently_uploaded=()):
-        try:
-            metadata_obj = container.get_object(self.metadata_filename)
-            content = StringIO()
-            for bytes_ in metadata_obj.as_stream():
-                content.write(bytes_.decode('utf-8'))
-            content.seek(0)
-            metadata = json.load(content)
-        except ObjectDoesNotExistError:
+        data = self._download_bytes(container, self.metadata_filename)
+        if data is None:
             metadata = {}
+        else:
+            metadata = json.loads(data.decode('utf-8'))
         metadata.update(local_metadata)
 
         # Garbage collect metadata for deleted files
@@ -115,10 +145,9 @@ class Uploader(object):
 
         print('Uploading %s with %d entries'
               % (self.metadata_filename, len(metadata)))
-        metadata_json_bytes = BytesIO(json.dumps(metadata).encode('utf-8'))
-        driver.upload_object_via_stream(iterator=metadata_json_bytes,
-                                        container=container,
-                                        object_name=self.metadata_filename)
+
+        self._upload_bytes(json.dumps(metadata).encode('utf-8'),
+                           container, self.metadata_filename)
         return metadata
 
     def _get_package_filenames(self, driver, container,
@@ -155,9 +184,8 @@ class Uploader(object):
                               % (filename, filename))
         payload.write(u'</p></body></html>\n')
         payload.seek(0)
-        driver.upload_object_via_stream(iterator=payload,
-                                        container=container,
-                                        object_name=self.index_filename)
+        self._upload_bytes(payload.getvalue().encode('utf-8'),
+                           container, self.index_filename)
 
     def _scan_local_files(self, local_folder):
         """Collect file informations on the folder to upload.
@@ -206,10 +234,9 @@ class Uploader(object):
 
         size_mb = os.stat(filepath).st_size / 1e6
         print("Uploading %s [%0.3f MB]" % (filepath, size_mb))
-        with open(filepath, 'rb') as byte_stream:
-            driver.upload_object_via_stream(iterator=byte_stream,
-                                            container=container,
-                                            object_name=filename)
+        driver.upload_object(file_path=filepath,
+                             container=container,
+                             object_name=filename)
 
         if self.delete_previous_dev_packages:
             existing_filenames = self._get_package_filenames(driver, container)

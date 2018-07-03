@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.10.0
+
+  - Upgrade dependency to latest apache-libcloud
+  - Use temporary files for upload and downloads to workaround
+    a bug with Python 3.7.
+
 ## 0.9.7 - 2018-07-02
 
   - Add explicit dependency on certifi to resolve SSL

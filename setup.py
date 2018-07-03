@@ -29,7 +29,7 @@ setup(
         "packaging",
         "certifi",
         'futures; python_version == "2.7"',
-        "apache-libcloud==1.1.0",
+        "apache-libcloud",
     ],
     long_description_markdown_filename='README.md',
     classifiers=[
@@ -41,13 +41,11 @@ setup(
         'Operating System :: Unix',
         'Operating System :: MacOS',
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-	'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     cmdclass=cmdclass,
 )
