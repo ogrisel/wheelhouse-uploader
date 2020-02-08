@@ -102,7 +102,7 @@ class Uploader(object):
                 shutil.rmtree(tempdir)
             except OSError:
                 # Ignore permission errors on temporary directories
-                print("WARNING: faile to delete", tempdir)
+                print("WARNING: failed to delete", tempdir)
 
     def _download_bytes(self, container, object_name, missing=None):
         tempdir = tempfile.mkdtemp()
