@@ -1,8 +1,10 @@
 try:
     from urllib.request import urlopen
+    from urllib.parse import urlparse
 except ImportError:
     # Python 2 compat
     from urllib2 import urlopen
+    from urlparse import urlparse
 import re
 import os
 import shutil
@@ -42,7 +44,12 @@ def _parse_html(index_url, folder, project_name, version=None):
     found_versions = set()
     for match in re.finditer(link_pattern, html_content):
         link = match.group(1)
-        if index_url.endswith('/'):
+        if link.startswith("/"):
+            parsed_index_url = urlparse(index_url)
+            url = "%s://%s%s" % (parsed_index_url.scheme,
+                                 parsed_index_url.netloc,
+                                 link)
+        elif index_url.endswith('/'):
             url = index_url + link
         elif index_url.endswith('.html'):
             url = index_url.rsplit('/', 1)[0] + '/' + link
