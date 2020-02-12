@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.10.2 - 2020-02-12
+
+  - Support absolute artifacts URLs.
+
 ## 0.10.1 - 2018-07-03
 
   - Pinning apache-liblcoud==2.2.1 dependency to workaround
