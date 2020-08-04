@@ -122,7 +122,7 @@ def _parse_wheel_filename(basename, project_name=None, return_tags=False):
         pyversion = '.'.join(str(x) for x in sys.version_info[:2])
     elif pytag[:2] == 'py' and len(pytag) == 3:
         pyversion = '%s' % pytag[2]
-    elif pytag[:2] == 'py' and len(pytag) == 4:
+    elif pytag[:2] in ['pp', 'py'] and len(pytag) == 4:
         pyversion = '%s.%s' % (pytag[2], pytag[3])
     elif pytag[:2] == 'cp':
         pyversion = '%s.%s' % (pytag[2], pytag[3])
