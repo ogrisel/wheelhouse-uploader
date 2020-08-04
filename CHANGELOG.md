@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 0.10.3 - 2020-08-04
+
+  - Fix support for PyPy tags:
+    https://github.com/ogrisel/wheelhouse-uploader/pull/37
+
+  - Make it possible to fetch sdist:
+    https://github.com/ogrisel/wheelhouse-uploader/pull/36
+
 ## 0.10.2 - 2020-02-12
 
   - Support absolute artifacts URLs.
