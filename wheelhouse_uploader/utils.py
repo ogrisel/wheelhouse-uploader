@@ -168,7 +168,7 @@ def _parse_exe_filename(basename, project_name=None, return_tags=True):
 def _parse_source_filename(basename, project_name=None, return_tags=True):
     distname, version = basename.rsplit('-', 1)
     distname = _wheel_escape(distname)
-    if project_name is not None and _wheel_escape(project_name):
+    if project_name is not None and distname != _wheel_escape(project_name):
         raise ValueError('File %s does not match expected project name %s'
                          % (basename, project_name))
     if return_tags:
